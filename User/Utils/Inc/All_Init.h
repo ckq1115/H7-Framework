@@ -2,8 +2,8 @@
 // Created by CaoKangqi on 2026/2/13.
 //
 
-#ifndef G4_FRAMEWORK_ALL_INIT_H
-#define G4_FRAMEWORK_ALL_INIT_H
+#ifndef H7_FRAMEWORK_ALL_INIT_H
+#define H7_FRAMEWORK_ALL_INIT_H
 
 #include <string.h>
 #include "main.h"
@@ -15,7 +15,9 @@
 #include "cmsis_os2.h"
 #include "BSP-FDCAN.h"
 #include "BSP_DWT.h"
-
+#include "DBUS.h"
+#include "DJI_Motor.h"
+#include "DM_Motor.h"
 
 void All_Init(void);
-#endif //G4_FRAMEWORK_ALL_INIT_H
+#endif //H7_FRAMEWORK_ALL_INIT_H

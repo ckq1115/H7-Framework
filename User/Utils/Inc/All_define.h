@@ -2,12 +2,8 @@
 // Created by CaoKangqi on 2026/2/13.
 //
 
-#ifndef G4_FRAMEWORK_ALL_DEFINE_H
-#define G4_FRAMEWORK_ALL_DEFINE_H
-
-//CCMRAM配置
-#define CCM_DATA  __attribute__((section(".ccmram")))
-#define CCM_FUNC  __attribute__((section(".ccmram.text"), noinline, flatten))
+#ifndef H7_FRAMEWORK_ALL_DEFINE_H
+#define H7_FRAMEWORK_ALL_DEFINE_H
 
 #define DF_READY 1
 #define DF_ERROR 0
@@ -35,4 +31,4 @@
 
 #define INIT_ANGLE 0;
 
-#endif //G4_FRAMEWORK_ALL_DEFINE_H
+#endif //H7_FRAMEWORK_ALL_DEFINE_H

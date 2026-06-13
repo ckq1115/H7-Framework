@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "cordic.h"
 #include "dma.h"
 #include "fdcan.h"
 #include "spi.h"
@@ -112,6 +113,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM4_Init();
   MX_SPI2_Init();
+  MX_CORDIC_Init();
   /* USER CODE BEGIN 2 */
   All_Init();
   /* USER CODE END 2 */

@@ -2,12 +2,11 @@
 // Created by CaoKangqi on 2026/1/25.
 //
 
-#ifndef G4_FRAMEWORK_CKQ_MATH_H
-#define G4_FRAMEWORK_CKQ_MATH_H
+#ifndef H7_FRAMEWORK_CKQ_MATH_H
+#define H7_FRAMEWORK_CKQ_MATH_H
 
 #include "stdint.h"
 
-// 已移除所有 RUI_F_ 前缀，仅保留后续的 MATH_ 相关标识
 int16_t MATH_ABS_int16_t(int16_t DATA);
 int32_t MATH_ABS_int32_t(int32_t DATA);
 int64_t MATH_ABS_int64_t(int64_t DATA);
@@ -35,4 +34,4 @@ float CORDIC_Sin_Fast(float angle_deg);
 float CORDIC_Cos_Fast(float angle_deg);
 int16_t OneFilter1(int16_t now, int16_t last, float thresholdValue);
 
-#endif //G4_FRAMEWORK_CKQ_MATH_H
+#endif //H7_FRAMEWORK_CKQ_MATH_H
