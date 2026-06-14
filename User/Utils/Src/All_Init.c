@@ -15,6 +15,8 @@ VT13_Typedef VT13 = { 0 };
 User_Data_T User_data;
 uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
 
+MOTOR_Typdef All_Motor;
+
 uint32_t stm32_id[3];
 void Get_UID(uint32_t *uid) {
     uid[0] = HAL_GetUIDw0();
