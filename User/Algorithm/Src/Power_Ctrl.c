@@ -5,7 +5,7 @@
 #include "Power_Ctrl.h"
 #include <stdint.h>
 #include "DJI_Motor.h"
-#include "All_Define.h"
+#include "All_define.h"
 #include <math.h>
 
 void Power_control_init(model_t *model) {

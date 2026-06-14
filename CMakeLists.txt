@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 # 项目基本配置
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 set(CMAKE_PROJECT_NAME H7_Framework)
 project(${CMAKE_PROJECT_NAME} C CXX ASM)
 
