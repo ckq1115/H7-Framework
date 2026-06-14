@@ -3,6 +3,18 @@
 //
 #include "All_Init.h"
 
+//DBUS
+uint8_t DBUS_RX_DATA[18]__attribute__((section(".RAM_D2")));
+DBUS_Typedef DBUS = { 0 };
+
+//VT13
+uint8_t VT13_RX_DATA[21];
+VT13_Typedef VT13 = { 0 };
+
+//裁判系统
+User_Data_T User_data;
+uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
+
 uint32_t stm32_id[3];
 void Get_UID(uint32_t *uid) {
     uid[0] = HAL_GetUIDw0();
@@ -13,12 +25,33 @@ void All_Init() {
     DWT_Init(550);
     Get_UID(stm32_id);
 
+    UART_ReceiveToIdle_DMA(&huart5,DBUS_RX_DATA,18);//DBUS串口
 
     FDCAN_Config(&hfdcan1, FDCAN_RX_FIFO0);
     FDCAN_Config(&hfdcan2, FDCAN_RX_FIFO1);
     FDCAN_Config(&hfdcan3, FDCAN_RX_FIFO0);
 
     WS2812_Init();
-    HAL_TIM_Base_Start_IT(&htim4);
+    BMI088_init();
 
+    HAL_TIM_Base_Start_IT(&htim4);
+    HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_2);//蜂鸣器
+    __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 100);
+    HAL_Delay(500);
+    __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 0);
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
+    //uint8_t *pData = huart->pRxBuffPtr;
+    if (huart->Instance == UART5){
+        if (Size == 18){
+            DBUS_Resolved(DBUS_RX_DATA, &DBUS);
+            __HAL_DMA_DISABLE_IT(huart5.hdmarx, DMA_IT_HT);
+        }
+    }
+}
+void HAL_UART_ErrorCallback(UART_HandleTypeDef * huart){
+    if (huart->Instance == UART5){
+        UART_ReceiveToIdle_DMA(&huart5,DBUS_RX_DATA,18);
+    }
 }

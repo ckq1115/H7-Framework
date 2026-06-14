@@ -1,8 +1,8 @@
 build/
-G4_Framework.jdebug
-G4_Framework.jdebug.user
-G4-GDB.jdebug
-G4-GDB.jdebug.user
+H7_Framework.jdebug
+H7_Framework.jdebug.user
+H7-GDB.jdebug
+H7-GDB.jdebug.user
 .settings/
 .idea/
 .vscode/

@@ -17,10 +17,11 @@ file(GLOB_RECURSE USER_SOURCES
         "User/*.c" "User/*.cpp" "User/*.s"
 )
 
-add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES})
+add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES}
+)
 
 # 自动递归包含头文件
-file(GLOB_RECURSE ALL_H_FILES CONFIGURE_DEPENDS "User/*.h" "User/*.hpp" "Core/*.h" "Middlewares/*.h")
+file(GLOB_RECURSE ALL_H_FILES CONFIGURE_DEPENDS "User/*.h" "User/*.hpp" "Core/*.h" )
 set(ALL_INCLUDE_DIRS "")
 foreach(FILE_PATH ${ALL_H_FILES})
     get_filename_component(DIR_PATH ${FILE_PATH} DIRECTORY)

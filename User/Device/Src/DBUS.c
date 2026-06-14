@@ -10,7 +10,6 @@
 #include "All_define.h"
 #include "Horizon_MATH.h"
 
-// 内部处理私有函数声明 (紧跟 VT13 架构设计)
 static float DBUS_OneFilter(float last, float now, float thresholdValue);
 static uint8_t DBUS_UpdateKeyStatus(uint8_t is_pressed, uint8_t *press_time);
 static void DBUS_HandleKeyToggle(uint8_t is_pressed, uint8_t *lock_flag, uint8_t *toggle_number);
@@ -26,18 +25,15 @@ void DBUS_Resolved(uint8_t* Data, DBUS_Typedef *DBUS)
     // 将输入缓冲区映射到位域结构体
     DBUS_FrameTypeDef* frame = (DBUS_FrameTypeDef*)Data;
 
-    // 提取遥控器状态开关位
     DBUS->Remote.S1 = frame->switch_right;
     DBUS->Remote.S2 = frame->switch_left;
 
-    // 各通道数据中心对称化计算 (-660 ~ 660)
     DBUS->Remote.CH0  = (int16_t)frame->channel0 - 1024;
     DBUS->Remote.CH1  = (int16_t)frame->channel1 - 1024;
     DBUS->Remote.CH2  = (int16_t)frame->channel2 - 1024;
     DBUS->Remote.CH3  = (int16_t)frame->channel3 - 1024;
     DBUS->Remote.Dial = (int16_t)frame->dial - 1024;
 
-    // 极端异常保护：若数据完全零化（全死区断连检测），强行归中
     if (frame->channel0 == 0)
     {
         DBUS->Remote.CH0  = 0;
@@ -47,11 +43,9 @@ void DBUS_Resolved(uint8_t* Data, DBUS_Typedef *DBUS)
         DBUS->Remote.Dial = 0;
     }
 
-    // 鼠标复合按键状态判定 (修复指针时间不递增的缺陷)
     DBUS->Mouse.L_State = DBUS_UpdateKeyStatus(frame->mouse_press_l, &DBUS->Mouse.L_PressTime);
     DBUS->Mouse.R_State = DBUS_UpdateKeyStatus(frame->mouse_press_r, &DBUS->Mouse.R_PressTime);
 
-    // 键盘基础 WASD 的复合状态判定与时间积累
     DBUS->KeyBoard.W = DBUS_UpdateKeyStatus(frame->key_w, &DBUS->KeyBoard.W_PressTime);
     DBUS->KeyBoard.A = DBUS_UpdateKeyStatus(frame->key_a, &DBUS->KeyBoard.A_PressTime);
     DBUS->KeyBoard.S = DBUS_UpdateKeyStatus(frame->key_s, &DBUS->KeyBoard.S_PressTime);
@@ -62,7 +56,6 @@ void DBUS_Resolved(uint8_t* Data, DBUS_Typedef *DBUS)
     DBUS->Mouse.Y_Flt = DBUS_OneFilter(DBUS->Mouse.Y_Flt, (float)frame->mouse_y, 500);
     DBUS->Mouse.Z_Flt = DBUS_OneFilter(DBUS->Mouse.Z_Flt, (float)frame->mouse_z, 500);
 
-    // 键盘功能按键物理按下状态实时映射
     DBUS->KeyBoard.Shift = frame->key_shift;
     DBUS->KeyBoard.Ctrl  = frame->key_ctrl;
     DBUS->KeyBoard.Q     = frame->key_q;
@@ -76,7 +69,6 @@ void DBUS_Resolved(uint8_t* Data, DBUS_Typedef *DBUS)
     DBUS->KeyBoard.V     = frame->key_v;
     DBUS->KeyBoard.B     = frame->key_b;
 
-    // 键盘边沿锁触发取反逻辑 (彻底避免外部全局锁与时间逻辑混用导致的紊乱)
     static uint8_t KeyLocks[12] = {0};
     DBUS_HandleKeyToggle(DBUS->KeyBoard.Shift, &KeyLocks[0],  &DBUS->KeyBoard.Shift_PreeNumber);
     DBUS_HandleKeyToggle(DBUS->KeyBoard.Ctrl,  &KeyLocks[1],  &DBUS->KeyBoard.Ctrl_PreeNumber);

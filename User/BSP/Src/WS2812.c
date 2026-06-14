@@ -50,7 +50,7 @@ static void Fill_Buffer(uint16_t ledIdx, uint16_t bufferOffset, uint8_t isReset)
     uint16_t start_offset = bufferOffset;
     if (isReset) {
         memset(&DMA_Buffer[bufferOffset], 0, 24 * sizeof(uint16_t));
-        SCB_CleanDCache_by_Addr((uint32_t *)&DMA_Buffer[start_offset], 48);
+        //SCB_CleanDCache_by_Addr((uint32_t *)&DMA_Buffer[start_offset], 48);
         return;
     }
     // 获取颜色并计算全局亮度
@@ -70,39 +70,8 @@ static void Fill_Buffer(uint16_t ledIdx, uint16_t bufferOffset, uint8_t isReset)
     for (int8_t i = 23; i >= 0; i--) {
         DMA_Buffer[bufferOffset++] = (color & (1 << i)) ? WS2812_PWM_HIGH : WS2812_PWM_LOW;
     }
-    SCB_CleanDCache_by_Addr((uint32_t *)&DMA_Buffer[start_offset], 48);
+    //SCB_CleanDCache_by_Addr((uint32_t *)&DMA_Buffer[start_offset], 48);
 }
-/*static void Fill_Buffer(uint16_t ledIdx, uint16_t bufferOffset, uint8_t isReset) {
-    uint16_t start_offset = bufferOffset;
-
-    if (isReset) {
-        // 注意：24 个 uint32_t 是 96 字节
-        memset(&DMA_Buffer[bufferOffset], 0, 24 * sizeof(uint32_t));
-        // 刷新 96 字节的 Cache
-        SCB_CleanDCache_by_Addr((uint32_t *)&DMA_Buffer[start_offset], 96);
-        return;
-    }
-
-    uint8_t r = LED_Data[ledIdx].R;
-    uint8_t g = LED_Data[ledIdx].G;
-    uint8_t b = LED_Data[ledIdx].B;
-
-    if (Global_Brightness < 255) {
-        r = (r * Global_Brightness) >> 8;
-        g = (g * Global_Brightness) >> 8;
-        b = (b * Global_Brightness) >> 8;
-    }
-
-    uint32_t color = ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b;
-
-    for (int8_t i = 23; i >= 0; i--) {
-        // 现在存入的是 32 位宽度的 CCR 映射值
-        DMA_Buffer[bufferOffset++] = (color & (1 << i)) ? WS2812_PWM_HIGH : WS2812_PWM_LOW;
-    }
-
-    // 每个像素 24 个 uint32_t = 96 字节，必须刷够长度！
-    SCB_CleanDCache_by_Addr((uint32_t *)&DMA_Buffer[start_offset], 96);
-}*/
 
 void WS2812_Init(void) {
     isSending = 0;

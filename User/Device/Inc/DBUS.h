@@ -6,8 +6,8 @@
  * @author CaoKangqi
  */
 
-#ifndef G4_FRAMEWORK_DBUS_H
-#define G4_FRAMEWORK_DBUS_H
+#ifndef H7_FRAMEWORK_DBUS_H
+#define H7_FRAMEWORK_DBUS_H
 
 #include <stdbool.h>
 #include <stdint.h>

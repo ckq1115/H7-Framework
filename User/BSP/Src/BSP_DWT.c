@@ -111,3 +111,41 @@ void DWT_Delay(float Delay)
     {
     }
 }
+
+void DWT_delay_us(uint16_t uSec)
+{
+    if(uSec > 10000) uSec = 10000;
+
+    uint32_t ticks_start, ticks_end, ticks_delay;
+
+    ticks_start = DWT->CYCCNT;
+    ticks_delay = ( uSec * ( SystemCoreClock / (1000000) ) ); // 将微秒数换算成滴答数
+    ticks_end = ticks_start + ticks_delay;
+
+    // ticks_end没有溢出
+    if ( ticks_end >= ticks_start )
+    {
+        // DWT_CYCCNT在上述计算的这段时间中没有溢出
+        if(DWT->CYCCNT > ticks_start)
+        {
+            while( DWT->CYCCNT < ticks_end );
+        }
+        // DWT_CYCCNT溢出
+        else
+        {
+            // 已经超时，直接退出
+            return;
+        }
+    }
+    else // ticks_end溢出
+    {
+        // DWT_CYCCNT在上述计算的这段时间中没有溢出
+        if(DWT->CYCCNT > ticks_start)
+        {
+            // 等待DWT_CYCCNT的值溢出
+            while( DWT->CYCCNT > ticks_end );
+        }
+        // 等待溢出后的DWT_CYCCNT到达ticks_end
+        while( DWT->CYCCNT < ticks_end );
+    }
+}
