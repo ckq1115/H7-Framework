@@ -19,3 +19,18 @@ void IMU_Task(void *argument)
         osDelay(1);
     }
 }
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
+    //uint8_t *pData = huart->pRxBuffPtr;
+    if (huart->Instance == UART5){
+        if (Size == 18){
+            DBUS_Resolved(DBUS_RX_DATA, &DBUS);
+            __HAL_DMA_DISABLE_IT(huart5.hdmarx, DMA_IT_HT);
+        }
+    }
+}
+void HAL_UART_ErrorCallback(UART_HandleTypeDef * huart){
+    if (huart->Instance == UART5){
+        UART_ReceiveToIdle_DMA(&huart5,DBUS_RX_DATA,18);
+    }
+}
