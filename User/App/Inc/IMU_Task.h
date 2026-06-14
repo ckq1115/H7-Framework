@@ -6,7 +6,7 @@
 #define G4_FRAMEWORK_IMU_TASK_H
 
 #include "main.h"
-#include "TIM.h"
+#include "tim.h"
 #include "controller.h"
 #include "All_Init.h"
 
