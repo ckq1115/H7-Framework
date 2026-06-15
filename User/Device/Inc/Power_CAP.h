@@ -2,7 +2,7 @@
 #define G4_FRAMEWORK_POWER_CAP_H
 
 #include <stdint.h>
-#include "BSP-FDCAN.h"
+#include "BSP_FDCAN.h"
 #include "Referee.h"
 
 #pragma pack(1) // 确保结构体按1字节对齐，防止CAN数据错位

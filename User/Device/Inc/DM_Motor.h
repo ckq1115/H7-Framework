@@ -4,7 +4,7 @@
 #ifndef G4_FRAMEWORK_DM_MOTOR_H
 #define G4_FRAMEWORK_DM_MOTOR_H
 
-#include "BSP-FDCAN.h"
+#include "BSP_FDCAN.h"
 #include "Horizon_MATH.h"
 #include "controller.h"
 

@@ -15,7 +15,7 @@ void IMU_Task(void *argument)
     {
         imu_period_s = DWT_GetDeltaT(&INS_DWT_Count);
         BMI088_read(IMU_Data.gyro, IMU_Data.accel, &IMU_Data.temp);
-        //IMU_Update_Task(imu_period_s);
+        IMU_Update_Task(imu_period_s);
         osDelay(1);
     }
 }
