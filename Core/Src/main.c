@@ -118,6 +118,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART10_UART_Init();
   MX_USB_OTG_HS_PCD_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
   All_Init();
   /* USER CODE END 2 */
@@ -248,13 +249,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  if (htim->Instance == TIM4) {
-    WS2812_SetPixel(0, 0, 255, 0);
-    WS2812_UpdateBreathing(0, 2.0f);
-    WS2812_Send();
-    DWT_SysTimeUpdate();
 
-  }
   /* USER CODE END Callback 1 */
 }
 
@@ -267,6 +262,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);
   HAL_NVIC_SystemReset();
   while (1)
   {

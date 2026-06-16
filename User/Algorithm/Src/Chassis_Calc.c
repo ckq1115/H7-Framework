@@ -18,12 +18,7 @@ static float AbsFloat(float val)
     return (val < 0.0f) ? -val : val;
 }
 
-static float WrapToPi(float angle)
-{
-    while (angle > PI) angle -= 2.0f * PI;
-    while (angle < -PI) angle += 2.0f * PI;
-    return angle;
-}
+
 
 uint8_t MecanumInit(mecanumInit_typdef *mecanumInitT)
 {

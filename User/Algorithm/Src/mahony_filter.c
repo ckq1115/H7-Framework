@@ -90,7 +90,7 @@ void mahony_update(struct MAHONY_FILTER_t *f,
     arm_sqrt_f32(gyro_sum_sq, &gyro_norm);
 
     // 静态零偏学习逻辑
-    int is_static = (fabsf(f->acc_norm - 9.81f) < 0.1f) && (gyro_norm < 0.015f);
+    int is_static = (fabsf(f->acc_norm - 9.81f) < 0.05f) && (gyro_norm < 0.015f);
     if (is_static)
     {
         const float learn_rate = 0.006f;

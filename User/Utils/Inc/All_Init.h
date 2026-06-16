@@ -25,6 +25,8 @@
 #include "BMI088driver.h"
 #include "mahony_filter.h"
 #include "IMU_Task.h"
+#include "Power_CAP.h"
+#include "VQF_filter.h"
 
 extern uint8_t DBUS_RX_DATA[18];
 extern DBUS_Typedef DBUS;

@@ -12,7 +12,7 @@
 #include "QuaternionEKF.h"
 
 #define IMU_TARGET_TEMP        40.0f     // 目标温度 (℃)
-#define TEMP_STABLE_ERR        0.35f     // 稳定判据误差
+#define TEMP_STABLE_ERR        0.5f     // 稳定判据误差
 #define TEMP_STABLE_TIME_MS    1500      // 稳定持续时间 (ms)
 #define GYRO_CALIB_SAMPLES     1000      // 陀螺仪采样样本数
 
@@ -22,17 +22,20 @@ typedef struct {
     float kd;
 } PID_Params_t;
 
-static const PID_Params_t base_pid = {70.0f, 0.12f, 100.0f};
+static const PID_Params_t base_pid = {180.0f, 0.02f, 0.0f};
 
+static PID_Params_t current_pid;
 
-
-#define HEATER_PWM_MAX         1000.0f
+#define HEATER_PWM_MAX         500.0f
 
 IMU_CTRL_STATE_e imu_ctrl_state = TEMP_INIT;// 当前控制状态
 IMU_CTRL_FLAG_t  imu_ctrl_flag  = {0};// 控制状态标志
 PID_t imu_temp;
 FuzzyRule_t fuzzy_rule_temp;
-IMU_Data_t IMU_Data = {0};
+IMU_Data_t IMU_Data = {
+    .accel_bias = {0.0f, 0.0f, 0.0f},
+    .accel_scale = {1.0f, 1.0f, 1.0f}
+};
 
 static uint32_t temp_stable_tick = 0;// 温度稳定计时起点
 static uint16_t imu_pid_cnt      = 0;//PID控制计数器，用于10ms分频执行PID计算
@@ -48,7 +51,7 @@ void Set_Heater_PWM(float pwm)
 {
     // 限幅保护
     pwm = (pwm < 0.0f) ? 0.0f : (pwm > HEATER_PWM_MAX) ? HEATER_PWM_MAX : pwm;
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, (uint32_t)pwm);
+    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (uint32_t)pwm);
 }
 
 /**
@@ -57,10 +60,10 @@ void Set_Heater_PWM(float pwm)
  */
 void IMU_Temp_Control_Init(void)
 {
-    /*// 1. 初始化PID控制器基础配置
+    // 1. 初始化PID控制器基础配置
     PID_Init(&imu_temp,
-             1000.0f,               // MaxOut
-             600.0f,                // IntegralLimit
+            400.0f,               // MaxOut
+             30.0f,                // IntegralLimit
              (float*)&base_pid,     // 指向初始参数
              7.5f,                  // CoefA
              1.0f,                  // CoefB
@@ -76,12 +79,12 @@ void IMU_Temp_Control_Init(void)
 
     // 2. 初始化模糊规则参数
     Fuzzy_Rule_Init(&fuzzy_rule_temp, NULL, NULL, NULL,
-        6.0f, 0.015f, 10.0f, // Kp, Ki, Kd Ratios
-        3.5f, // eStep
-        0.85f // ecStep
+        -20.0f, 0.05f, 0.0f, // Kp, Ki, Kd Ratios
+        1.5f, // eStep
+        0.125f // ecStep
         );
 
-    current_pid = base_pid;*/
+    current_pid = base_pid;
 }
 /**
  * @brief IMU数据更新与控制状态机执行函数
@@ -90,14 +93,14 @@ void IMU_Temp_Control_Init(void)
 void IMU_Update_Task(float dt_s)
 {
     float now_temp = IMU_Data.temp;
-    //IMU_Status_Check();// 监测IMU数据，若不正常则进入错误状态
-    /*if (imu_ctrl_state != TEMP_INIT)
+    IMU_Status_Check();// 监测IMU数据，若不正常则进入错误状态
+    if (imu_ctrl_state != TEMP_INIT)
     {
         if (++imu_pid_cnt >= 10)
         {
             heater_pwm_out = (now_temp <= IMU_TARGET_TEMP-10.0f)
                               ? HEATER_PWM_MAX
-                              : PID_Calculate(&imu_temp, now_temp, IMU_TARGET_TEMP);
+                              : PID_Calculate(&imu_temp, now_temp, IMU_TARGET_TEMP)+40;
 
             if (now_temp > IMU_TARGET_TEMP-10.0f)
             {
@@ -112,7 +115,7 @@ void IMU_Update_Task(float dt_s)
             Set_Heater_PWM(heater_pwm_out);
             imu_pid_cnt = 0;
         }
-    }*/
+    }
 
     switch (imu_ctrl_state)
     {
@@ -120,8 +123,9 @@ void IMU_Update_Task(float dt_s)
             IMU_Temp_Control_Init();
             IMU_QuaternionEKF_Init(10, 0.001f, 10000000, 1, 0.001f,0);
             mahony_init(&mahony_filter, 2.0f, 0.01f, 0.9f,dt_s);
+            vqf_init(&vqf_filter,0.001f);
 #ifdef DEBUG_MODE
-            imu_ctrl_state = GYRO_CALIB;
+            imu_ctrl_state = TEMP_PID_CTRL;
 #endif
 #ifdef RELEASE_MODE
             imu_ctrl_state = GYRO_CALIB;
@@ -170,33 +174,30 @@ void IMU_Update_Task(float dt_s)
             break;
 
         case FUSION_RUN:
+            WS2812_SetPixel(0, 0, 140, 60);
             const float AXIS_DIR[3] = {1.0f, 1.0f, 1.0f};// 根据安装方向调整轴向，确保输出符合右手坐标系
             for (int i = 0; i < 3; i++) {
                 IMU_Data.gyro[i] = (IMU_Data.gyro[i] - IMU_Data.gyro_correct[i]) * AXIS_DIR[i];
                 IMU_Data.accel[i] = (IMU_Data.accel[i] - IMU_Data.accel_bias[i]) * IMU_Data.accel_scale[i] * AXIS_DIR[i];
             }
-            /*VOFA_justfloat(IMU_Data.gyro[0],IMU_Data.gyro[1],IMU_Data.gyro[2],
-            IMU_Data.accel[0],IMU_Data.accel[1],IMU_Data.accel[2],0,0,0,0);//用于FFT分析采样*/
-
-            // mahony姿态融合更新，实测效果还不错，QuaternionEKF有想法的自己整吧
-             mahony_update(&mahony_filter,
+            mahony_update(&mahony_filter,
              IMU_Data.gyro[0], IMU_Data.gyro[1], IMU_Data.gyro[2],
              IMU_Data.accel[0], IMU_Data.accel[1], IMU_Data.accel[2],dt_s);
-             mahony_output(&mahony_filter);
-            /*IMU_QuaternionEKF_Update(IMU_Data.gyro[0], IMU_Data.gyro[1], IMU_Data.gyro[2],
-            IMU_Data.accel[0], IMU_Data.accel[1], IMU_Data.accel[2]);*/
-            IMU_Data.q[0] = mahony_filter.q0;
-            IMU_Data.q[1] = mahony_filter.q1;
-            IMU_Data.q[2] = mahony_filter.q2;
-            IMU_Data.q[3] = mahony_filter.q3;
-            IMU_Data.pitch=Get_Pitch(); //获得pitch
-            IMU_Data.roll=Get_Roll();//获得roll
-            IMU_Data.yaw=Get_Yaw();//获得yaw
-            IMU_Data.YawTotalAngle=Get_YawTotalAngle();
-            /*IMU_Data.pitch = mahony_filter.pitch;
-            IMU_Data.roll = mahony_filter.roll;
-            IMU_Data.yaw = mahony_filter.yaw;
-            IMU_Data.YawTotalAngle = mahony_filter.YawTotalAngle;*/
+            mahony_output(&mahony_filter);
+
+            vqf_update(&vqf_filter,
+                IMU_Data.gyro[0], IMU_Data.gyro[1], IMU_Data.gyro[2],
+                IMU_Data.accel[0], IMU_Data.accel[1], IMU_Data.accel[2]);
+            vqf_output(&vqf_filter);
+
+            IMU_Data.q[0] = vqf_filter.q[0];
+            IMU_Data.q[1] = vqf_filter.q[1];
+            IMU_Data.q[2] = vqf_filter.q[2];
+            IMU_Data.q[3] = vqf_filter.q[3];
+            IMU_Data.pitch = vqf_filter.pitch;
+            IMU_Data.roll = vqf_filter.roll;
+            IMU_Data.yaw = vqf_filter.yaw;
+            IMU_Data.YawTotalAngle = vqf_filter.YawTotalAngle;
             imu_ctrl_flag.fusion_enabled = 1;
             break;
         case ERROR_STATE:
@@ -241,14 +242,14 @@ void IMU_Gyro_Zero_Calibration_Task(void)
     uint8_t is_stable = 1;
     for (int i = 0; i < 3; i++)
     {
-        // 计算当前均值（临时变量，防止直接修改原始数据导致重试逻辑失效）
+        // 计算当前均值
         float mean_g = IMU_Data.gyro_correct[i] * div;
         float mean_a = IMU_Data.accel_correct[i] * div;
         // 方差公式：Var = E(x²) - (E(x))²
         float gyro_var  = (gyro_sq_sum[i] * div) - (mean_g * mean_g);
         float accel_var = (accel_sq_sum[i] * div) - (mean_a * mean_a);
         // 判定阈值，如果超过阈值，认为数据不稳定，需重新采集
-        if (gyro_var > 0.01f || accel_var > 0.01f)
+        if (gyro_var > 0.005f || accel_var > 0.005f)
         {
             is_stable = 0;
             break;
@@ -280,17 +281,6 @@ void IMU_Gyro_Zero_Calibration_Task(void)
 }
 
 /**
- * @brief 外部触发重新校准
- */
-void IMU_Gyro_Calib_Initiate(void)
-{
-
-    imu_ctrl_flag.gyro_calib_done = 0;// 重置校准完成标志
-    gyro_calib_cnt = 0;// 重置计数器
-    IMU_Data.gyro_correct[0] = IMU_Data.gyro_correct[1] = IMU_Data.gyro_correct[2] = 0.0f;
-}
-
-/**
  * @brief IMU数据状态检查，包含静态零值检测、数据卡死检测和温度边界保护
  * @note  该函数在每次IMU数据更新后调用，若检测到异常则将状态机切换到ERROR_STATE
  */
@@ -309,7 +299,6 @@ void IMU_Status_Check(void) {
     } else {
         zero_cnt = 0; // 只要有数据不为 0，立即重置计数器
     }
-
     // 数据卡死检测
     // 将六轴数据求和，若连续 100 次采样完全一致，判定为传感器内部逻辑死锁
     float sum = 0;

@@ -74,9 +74,9 @@ typedef enum {
     DM_CMD_CLEAR_ERROR   = 0xfb,//清除错误状态
 } DMMotor_Mode_e;
 
-// 模式解析
-void DM_Standard_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data);
-void DM_1to4_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data);
+// 反馈解算
+void DM_Standard_Resolve(void* instance, uint8_t *rx_data);
+void DM_1to4_Resolve(void* instance, uint8_t* rx_data);
 
 // 控制发送
 void Motor_Mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id, DMMotor_Mode_e what);
