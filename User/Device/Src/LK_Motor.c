@@ -2,7 +2,7 @@
 // Created by CaoKangqi on 2026/3/15.
 //
 #include "LK_Motor.h"
-#include "BSP-FDCAN.h"
+#include "BSP_FDCAN.h"
 
 /**
  * @brief LK 电机协议解析
