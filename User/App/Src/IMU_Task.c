@@ -79,7 +79,7 @@ void IMU_Temp_Control_Init(void)
 
     // 2. 初始化模糊规则参数
     Fuzzy_Rule_Init(&fuzzy_rule_temp, NULL, NULL, NULL,
-        -20.0f, -0.05f, 0.0f, // Kp, Ki, Kd Ratios
+        -20.0f, 0.05f, 0.0f, // Kp, Ki, Kd Ratios
         1.5f, // eStep
         0.125f // ecStep
         );
@@ -123,6 +123,7 @@ void IMU_Update_Task(float dt_s)
             IMU_Temp_Control_Init();
             IMU_QuaternionEKF_Init(10, 0.001f, 10000000, 1, 0.001f,0);
             mahony_init(&mahony_filter, 2.0f, 0.01f, 0.9f,dt_s);
+            vqf_init(&vqf_filter,0.001f);
 #ifdef DEBUG_MODE
             imu_ctrl_state = TEMP_PID_CTRL;
 #endif
@@ -183,14 +184,20 @@ void IMU_Update_Task(float dt_s)
              IMU_Data.gyro[0], IMU_Data.gyro[1], IMU_Data.gyro[2],
              IMU_Data.accel[0], IMU_Data.accel[1], IMU_Data.accel[2],dt_s);
             mahony_output(&mahony_filter);
-            IMU_Data.q[0] = mahony_filter.q0;
-            IMU_Data.q[1] = mahony_filter.q1;
-            IMU_Data.q[2] = mahony_filter.q2;
-            IMU_Data.q[3] = mahony_filter.q3;
-            IMU_Data.pitch = mahony_filter.pitch;
-            IMU_Data.roll = mahony_filter.roll;
-            IMU_Data.yaw = mahony_filter.yaw;
-            IMU_Data.YawTotalAngle = mahony_filter.YawTotalAngle;
+
+            vqf_update(&vqf_filter,
+                IMU_Data.gyro[0], IMU_Data.gyro[1], IMU_Data.gyro[2],
+                IMU_Data.accel[0], IMU_Data.accel[1], IMU_Data.accel[2]);
+            vqf_output(&vqf_filter);
+
+            IMU_Data.q[0] = vqf_filter.q[0];
+            IMU_Data.q[1] = vqf_filter.q[1];
+            IMU_Data.q[2] = vqf_filter.q[2];
+            IMU_Data.q[3] = vqf_filter.q[3];
+            IMU_Data.pitch = vqf_filter.pitch;
+            IMU_Data.roll = vqf_filter.roll;
+            IMU_Data.yaw = vqf_filter.yaw;
+            IMU_Data.YawTotalAngle = vqf_filter.YawTotalAngle;
             imu_ctrl_flag.fusion_enabled = 1;
             break;
         case ERROR_STATE:

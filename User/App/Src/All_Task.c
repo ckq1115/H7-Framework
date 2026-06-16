@@ -75,3 +75,11 @@ void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, ui
         }
     }
 }
+
+void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim->Instance == TIM4) {
+        WS2812_UpdateBreathing(0, 2.0f);
+        WS2812_Send();
+        DWT_SysTimeUpdate();
+    }
+}

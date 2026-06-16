@@ -8,10 +8,14 @@
  * @brief 达妙电机数据解析函数
  * @param motor   电机结构体指针
  * @param rx_data 接收到的8字节数据数组
- * @note 该函数根据达妙电机的通信协议，将接收到的字节数据解析为电机的物理量，并更新电机状态
+ * @note
  */
-void DM_Standard_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data)
+void DM_Standard_Resolve(void* instance, uint8_t *rx_data)
 {
+    if (instance == NULL || rx_data == NULL) return;
+
+    DM_MOTOR_Typdef* motor = (DM_MOTOR_Typdef*)instance;
+
     motor->DATA.id = (rx_data[0]) & 0x0F;
     motor->DATA.state = (rx_data[0]) >> 4;
     motor->DATA.p_int = (rx_data[1] << 8) | rx_data[2];
@@ -32,7 +36,7 @@ void DM_Standard_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data)
  * @brief 达妙电机一拖四模式数据解析函数
  * @param motor   电机结构体指针
  * @param rx_data 接收到的8字节数据数组
- * @note 该函数在标准解析的基础上，增加了多圈角度处理、速度滤波和离线计时等功能，以适应更复杂的应用场景
+ * @note
  */
 void DM_1to4_Resolve(void* instance, uint8_t* rx_data)
 {

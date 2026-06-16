@@ -4,7 +4,6 @@
 #include "controller.h"
 
 /******************************** FUZZY PID **********************************/
-// 业界标准的 7x7 模糊 PID 规则表 (包含负向调节)
 static float FuzzyRuleKpRAW[7][7] = {
     {PB, PB, PM, PM, PS, ZE, ZE},
     {PB, PB, PM, PS, PS, ZE, NS},
@@ -62,39 +61,37 @@ void Fuzzy_Rule_Implementation(FuzzyRule_t *fuzzyRule, float measure, float ref)
     int eLeftIndex, ecLeftIndex;
     int eRightIndex, ecRightIndex;
 
-    // 假设系统中有 DWT_GetDeltaT，如果报错请替换为实际的 dt 获取方式
     fuzzyRule->dt = 1;
 
     fuzzyRule->e = ref - measure;
     fuzzyRule->ec = (fuzzyRule->e - fuzzyRule->eLast) / fuzzyRule->dt;
     fuzzyRule->eLast = fuzzyRule->e;
 
-    // 隶属区间计算 (该部分逻辑无误)
+    // 隶属区间计算
     eLeftIndex = fuzzyRule->e >= 3 * fuzzyRule->eStep ? 6 : (fuzzyRule->e <= -3 * fuzzyRule->eStep ? 0 : (fuzzyRule->e >= 0 ? ((int)(fuzzyRule->e / fuzzyRule->eStep) + 3) : ((int)(fuzzyRule->e / fuzzyRule->eStep) + 2)));
     eRightIndex = fuzzyRule->e >= 3 * fuzzyRule->eStep ? 6 : (fuzzyRule->e <= -3 * fuzzyRule->eStep ? 0 : (fuzzyRule->e >= 0 ? ((int)(fuzzyRule->e / fuzzyRule->eStep) + 4) : ((int)(fuzzyRule->e / fuzzyRule->eStep) + 3)));
     ecLeftIndex = fuzzyRule->ec >= 3 * fuzzyRule->ecStep ? 6 : (fuzzyRule->ec <= -3 * fuzzyRule->ecStep ? 0 : (fuzzyRule->ec >= 0 ? ((int)(fuzzyRule->ec / fuzzyRule->ecStep) + 3) : ((int)(fuzzyRule->ec / fuzzyRule->ecStep) + 2)));
     ecRightIndex = fuzzyRule->ec >= 3 * fuzzyRule->ecStep ? 6 : (fuzzyRule->ec <= -3 * fuzzyRule->ecStep ? 0 : (fuzzyRule->ec >= 0 ? ((int)(fuzzyRule->ec / fuzzyRule->ecStep) + 4) : ((int)(fuzzyRule->ec / fuzzyRule->ecStep) + 3)));
 
-    // 隶属度计算 (该部分逻辑无误)
+    // 隶属度计算
     eLeftTemp = fuzzyRule->e >= 3 * fuzzyRule->eStep ? 0 : (fuzzyRule->e <= -3 * fuzzyRule->eStep ? 1 : (eRightIndex - fuzzyRule->e / fuzzyRule->eStep - 3));
     eRightTemp = fuzzyRule->e >= 3 * fuzzyRule->eStep ? 1 : (fuzzyRule->e <= -3 * fuzzyRule->eStep ? 0 : (fuzzyRule->e / fuzzyRule->eStep - eLeftIndex + 3));
     ecLeftTemp = fuzzyRule->ec >= 3 * fuzzyRule->ecStep ? 0 : (fuzzyRule->ec <= -3 * fuzzyRule->ecStep ? 1 : (ecRightIndex - fuzzyRule->ec / fuzzyRule->ecStep - 3));
     ecRightTemp = fuzzyRule->ec >= 3 * fuzzyRule->ecStep ? 1 : (fuzzyRule->ec <= -3 * fuzzyRule->ecStep ? 0 : (fuzzyRule->ec / fuzzyRule->ecStep - ecLeftIndex + 3));
 
-    // 【修复点】：双线性插值公式的索引必须与权重严格匹配
     fuzzyRule->KpFuzzy = eLeftTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKp[eLeftIndex][ecLeftIndex] +
-                         eLeftTemp * ecRightTemp * fuzzyRule->FuzzyRuleKp[eLeftIndex][ecRightIndex] + // 修复
-                         eRightTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKp[eRightIndex][ecLeftIndex] + // 修复
+                         eLeftTemp * ecRightTemp * fuzzyRule->FuzzyRuleKp[eLeftIndex][ecRightIndex] +
+                         eRightTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKp[eRightIndex][ecLeftIndex] +
                          eRightTemp * ecRightTemp * fuzzyRule->FuzzyRuleKp[eRightIndex][ecRightIndex];
 
     fuzzyRule->KiFuzzy = eLeftTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKi[eLeftIndex][ecLeftIndex] +
-                         eLeftTemp * ecRightTemp * fuzzyRule->FuzzyRuleKi[eLeftIndex][ecRightIndex] + // 修复
-                         eRightTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKi[eRightIndex][ecLeftIndex] + // 修复
+                         eLeftTemp * ecRightTemp * fuzzyRule->FuzzyRuleKi[eLeftIndex][ecRightIndex] +
+                         eRightTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKi[eRightIndex][ecLeftIndex] +
                          eRightTemp * ecRightTemp * fuzzyRule->FuzzyRuleKi[eRightIndex][ecRightIndex];
 
     fuzzyRule->KdFuzzy = eLeftTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKd[eLeftIndex][ecLeftIndex] +
-                         eLeftTemp * ecRightTemp * fuzzyRule->FuzzyRuleKd[eLeftIndex][ecRightIndex] + // 修复
-                         eRightTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKd[eRightIndex][ecLeftIndex] + // 修复
+                         eLeftTemp * ecRightTemp * fuzzyRule->FuzzyRuleKd[eLeftIndex][ecRightIndex] +
+                         eRightTemp * ecLeftTemp * fuzzyRule->FuzzyRuleKd[eRightIndex][ecLeftIndex] +
                          eRightTemp * ecRightTemp * fuzzyRule->FuzzyRuleKd[eRightIndex][ecRightIndex];
 }
 

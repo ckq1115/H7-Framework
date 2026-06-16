@@ -18,5 +18,5 @@ typedef struct {
 } CAN_Rx_Route_t;
 
 void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, uint8_t *data, uint32_t len);
-
+void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 #endif //H7_FRAMEWORK_ALL_TASK_H

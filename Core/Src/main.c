@@ -249,13 +249,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  //TODO
-  if (htim->Instance == TIM4) {
-    WS2812_UpdateBreathing(0, 2.0f);
-    WS2812_Send();
-    DWT_SysTimeUpdate();
 
-  }
   /* USER CODE END Callback 1 */
 }
 
