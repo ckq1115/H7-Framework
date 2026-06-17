@@ -141,7 +141,7 @@ static bool matrix3Inv(const vqf_real_t in[9], vqf_real_t out[9]) {
 void vqf_init(struct VQF_FILTER_t *f, float dt)
 {
     // 初始化参数
-    f->tauAcc = 0.8f;
+    f->tauAcc = 3.0f;
     f->motionBiasEstEnabled = true;
     f->restBiasEstEnabled = true;
     f->biasSigmaInit = 0.5f;
@@ -150,7 +150,7 @@ void vqf_init(struct VQF_FILTER_t *f, float dt)
     f->biasSigmaMotion = 0.1f;
     f->biasVerticalForgettingFactor = 0.0001f;
     f->biasSigmaRest = 0.03f;
-    f->restMinT = 1.0f;
+    f->restMinT = 1.5f;
     f->restFilterTau = 0.5f;
     f->restThGyr = 2.0f;
     f->restThAcc = 0.5f;

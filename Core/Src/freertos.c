@@ -62,6 +62,7 @@ const osThreadAttr_t IMUTask_attributes = {
 
 void IMU_Task(void *argument);
 
+extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -113,6 +114,8 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_IMU_Task */
 __weak void IMU_Task(void *argument)
 {
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN IMU_Task */
   /* Infinite loop */
   for(;;)

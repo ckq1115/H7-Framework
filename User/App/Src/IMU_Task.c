@@ -7,9 +7,8 @@
 
 #include "IMU_Task.h"
 #include <math.h>
+#include "All_Init.h"
 
-#include "mahony_filter.h"
-#include "QuaternionEKF.h"
 
 #define IMU_TARGET_TEMP        40.0f     // 目标温度 (℃)
 #define TEMP_STABLE_ERR        0.5f     // 稳定判据误差
@@ -180,10 +179,6 @@ void IMU_Update_Task(float dt_s)
                 IMU_Data.gyro[i] = (IMU_Data.gyro[i] - IMU_Data.gyro_correct[i]) * AXIS_DIR[i];
                 IMU_Data.accel[i] = (IMU_Data.accel[i] - IMU_Data.accel_bias[i]) * IMU_Data.accel_scale[i] * AXIS_DIR[i];
             }
-            mahony_update(&mahony_filter,
-             IMU_Data.gyro[0], IMU_Data.gyro[1], IMU_Data.gyro[2],
-             IMU_Data.accel[0], IMU_Data.accel[1], IMU_Data.accel[2],dt_s);
-            mahony_output(&mahony_filter);
 
             vqf_update(&vqf_filter,
                 IMU_Data.gyro[0], IMU_Data.gyro[1], IMU_Data.gyro[2],

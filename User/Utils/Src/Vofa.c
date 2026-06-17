@@ -1,10 +1,10 @@
 //
 // Created by CaoKangqi on 2026/1/19.
 //
-#include "../Inc/Vofa.h"
+#include "Vofa.h"
 #include "main.h"
 #include "usart.h"
-
+#include "usbd_cdc_if.h"
 union main
 {
     float data1[10];
@@ -41,5 +41,6 @@ void VOFA_justfloat(float a,float b,float c,float d,float e,float f,float g,floa
     data.data2[41]=0x00;
     data.data2[42]=0x80;
     data.data2[43]=0x7f;
-    HAL_UART_Transmit_DMA(&huart1,data.data2,sizeof(data.data2));
+    //HAL_UART_Transmit_DMA(&huart1,data.data2,sizeof(data.data2));
+    CDC_Transmit_HS(data.data2,sizeof(data.data2));
 }

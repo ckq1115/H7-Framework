@@ -27,6 +27,7 @@ void All_Init() {
     DWT_Init(550);
     Get_UID(stm32_id);
 
+    MX_USB_DEVICE_Init();
     UART_ReceiveToIdle_DMA(&huart5,DBUS_RX_DATA,18);//DBUS串口
 
     FDCAN_Config(&hfdcan1, FDCAN_RX_FIFO0);
