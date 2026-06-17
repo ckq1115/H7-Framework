@@ -1,6 +1,6 @@
 /**
  * @file vqf_filter.h
- * @brief VQF姿态滤波算法头文件 (精简6轴版)
+ * @brief VQF姿态滤波算法头文件
  */
 
 #ifndef H7_FRAMEWORK_VQF_FILTER_H

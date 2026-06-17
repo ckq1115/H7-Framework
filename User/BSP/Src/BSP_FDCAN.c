@@ -218,7 +218,6 @@ static inline void FDCAN_Rx_FIFO_Process(FDCAN_HandleTypeDef *hfdcan, uint32_t f
         }
         if (stats) stats->rx_count++;
 
-        // 【严格跨层】：直接抛给应用层，底层不需要知道这是什么电机
         CAN_App_Frame_Dispatch(hfdcan, rx_header.Identifier, rx_data, DLC_To_Bytes(rx_header.DataLength));
 
         if (fill_level > 64) break;

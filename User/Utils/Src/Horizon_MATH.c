@@ -57,6 +57,15 @@ float MATH_Limit_float(float MAX , float MIN , float DATA)
     return (DATA > MAX) ? MAX : ((DATA < MIN) ? MIN : DATA);
 }
 
+/* 私有辅助函数：安全的字节流与浮点数转换 (替代原先的全局 Union) */
+inline float Bytes_To_Float(const uint8_t *data) {
+    float f;
+    memcpy(&f, data, 4);
+    return f;
+}
+inline void Float_To_Bytes(float f, uint8_t *data) {
+    memcpy(data, &f, 4);
+}
 /************************************************************ 万能分隔符 **************************************************************
  *	@performance:	    // int16 限幅
  *	@parameter:		    // MAX：上限值；MIN：下限值；DATA：需要限幅的 int16_t 类型数据

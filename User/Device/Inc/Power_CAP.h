@@ -2,8 +2,10 @@
 #define G4_FRAMEWORK_POWER_CAP_H
 
 #include <stdint.h>
+
 #include "BSP_FDCAN.h"
 #include "Referee.h"
+
 
 #pragma pack(1) // 确保结构体按1字节对齐，防止CAN数据错位
 
@@ -13,11 +15,11 @@
 typedef struct {
     uint8_t  cap_key;       // FSBB开关状态
     uint8_t  cap_state;     // 状态位 (0:正常, 1:故障)
-    float  bat_voltage;
-    float nowPower;
-    uint8_t  Cap_Capacity;       // 电容电压
+    float    bat_voltage;
+    float    nowPower;
+    uint8_t  Cap_Capacity;  // 电容容量
     uint8_t  check_code;    // 校验位 (0xAA)
-    uint8_t ONLINE_JUDGE_TIME;
+    uint8_t  ONLINE_JUDGE_TIME;
 } CapRxData_t;
 
 /**
@@ -48,6 +50,8 @@ extern int open_cap_flag;
 
 /* 函数声明 */
 void Power_Cap_Rx(void *instance, uint8_t *rx_buf);
-void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, Cap_t *cap_ptr, User_Data_T *referee_data);
+
+// 注意：这里去掉了 ctrl 结构体指针，直接传入 basic_power_limit 数值
+void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, Cap_t *cap_ptr, float basic_power_limit, User_Data_T *referee);
 
 #endif //G4_FRAMEWORK_POWER_CAP_H

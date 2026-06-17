@@ -53,7 +53,7 @@ static void vqf_quatRotate(const vqf_real_t q[4], const vqf_real_t v[3], vqf_rea
 
 static void filterCoeffs(vqf_real_t tau, vqf_real_t Ts, vqf_double_t outB[], vqf_double_t outA[]) {
     vqf_double_t fc = (M_SQRT2 / (2.0*M_PIf))/(vqf_double_t)(tau);
-    vqf_double_t C = tanf(M_PIf*fc*(vqf_double_t)(Ts)); // 可替换为 arm_math 快速函数
+    vqf_double_t C = tanf(M_PIf*fc*(vqf_double_t)(Ts));
     vqf_double_t D = C*C + M_SQRT2*C + 1;
     vqf_double_t b0 = C*C/D;
     outB[0] = b0; outB[1] = 2*b0; outB[2] = b0;
