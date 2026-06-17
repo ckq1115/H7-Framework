@@ -70,6 +70,9 @@ void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, ui
             if (CAN_Rx_Config_Table[i].resolve != NULL)
             {
                 CAN_Rx_Config_Table[i].resolve(CAN_Rx_Config_Table[i].device_ptr, data);
+                if (i==Offline_Detector_Config_Table[i].id) {
+                    Offline_Detect_Feed(&Offline_Detector_Config_Table[i].device_ptr->last_feed_tick);
+                }
             }
             return;
         }

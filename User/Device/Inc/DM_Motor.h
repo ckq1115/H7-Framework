@@ -1,12 +1,13 @@
 //
 // Created by CaoKangqi on 2026/2/14.
 //
-#ifndef G4_FRAMEWORK_DM_MOTOR_H
-#define G4_FRAMEWORK_DM_MOTOR_H
+#ifndef H7_FRAMEWORK_DM_MOTOR_H
+#define H7_FRAMEWORK_DM_MOTOR_H
 
 #include "BSP_FDCAN.h"
 #include "Horizon_MATH.h"
 #include "controller.h"
+
 
 // --- 模式偏移地址 ---
 #define MIT_MODE      0x000

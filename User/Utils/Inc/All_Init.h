@@ -27,6 +27,7 @@
 #include "IMU_Task.h"
 #include "Power_CAP.h"
 #include "VQF_filter.h"
+#include "Offline_Detector.h"
 
 extern uint8_t DBUS_RX_DATA[18];
 extern DBUS_Typedef DBUS;
@@ -36,5 +37,8 @@ extern VT13_Typedef VT13;
 extern VT13_UNION_Typdef VT13_UNION;
 
 extern MOTOR_Typdef All_Motor;
+
+extern All_Offline_Detector_t All_Offline_Detector;
+
 void All_Init(void);
 #endif //H7_FRAMEWORK_ALL_INIT_H

@@ -19,6 +19,8 @@ file(GLOB_RECURSE USER_SOURCES
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES}
+        User/Device/Src/Offline_Detector.c
+        User/Device/Inc/Offline_Detector.h
 )
 
 # 自动递归包含头文件
