@@ -17,6 +17,9 @@ uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
 
 MOTOR_Typdef All_Motor;
 
+//Offline_check
+All_Offline_Detector_t All_Offline_Detector;
+
 uint32_t stm32_id[3];
 void Get_UID(uint32_t *uid) {
     uid[0] = HAL_GetUIDw0();

@@ -2,11 +2,12 @@
 // Created by CaoKangqi on 2026/3/15.
 //
 
-#ifndef G4_FRAMEWORK_LK_MOTOR_H
-#define G4_FRAMEWORK_LK_MOTOR_H
+#ifndef H7_FRAMEWORK_LK_MOTOR_H
+#define H7_FRAMEWORK_LK_MOTOR_H
 
 #include "controller.h"
 #include "fdcan.h"
+
 
 typedef struct
 {

@@ -1,8 +1,9 @@
-#ifndef __BM_MOTOR_H__
-#define __BM_MOTOR_H__
+#ifndef H7_FRAMEWORK_BM_MOTOR_H
+#define H7_FRAMEWORK_BM_MOTOR_H
 
 #include "main.h"
 #include "controller.h"
+
 
 typedef struct report
 {
@@ -27,6 +28,8 @@ extern reporter BM_reporter1;
 
 typedef struct 
 {
+	int8_t ONLINE_JUDGE_TIME;
+
 	uint16_t ID;
 	float aim;
 	float vel;

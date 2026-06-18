@@ -2,12 +2,13 @@
 // Created by CaoKangqi on 2026/2/14.
 //
 
-#ifndef G4_FRAMEWORK_DJI_MOTOR_H
-#define G4_FRAMEWORK_DJI_MOTOR_H
+#ifndef H7_FRAMEWORK_DJI_MOTOR_H
+#define H7_FRAMEWORK_DJI_MOTOR_H
 
 #include "BSP_FDCAN.h"
 #include "Horizon_MATH.h"
 #include "controller.h"
+#include "Offline_Detector.h"
 
 typedef struct {
     int8_t ONLINE_JUDGE_TIME;
