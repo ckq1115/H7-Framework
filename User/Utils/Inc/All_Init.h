@@ -32,6 +32,7 @@
 #include "usb_device.h"
 #include "mahony_filter.h"
 #include "QuaternionEKF.h"
+#include "Offline_Detector.h"
 extern uint8_t DBUS_RX_DATA[18];
 extern DBUS_Typedef DBUS;
 

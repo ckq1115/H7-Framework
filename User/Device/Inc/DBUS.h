@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "Offline_Detector.h"
+
 /**
  * @brief 按键复合状态枚举
  */
@@ -26,7 +28,7 @@ typedef enum {
  * @brief 应用层使用的解析结果结构体
  */
 typedef struct {
-    int8_t ONLINE_JUDGE_TIME;       /**< 在线检测倒计时时间 */
+    Offline_Check_t offline;
     int8_t Ctrl_Mode;
 
     /**
@@ -40,7 +42,6 @@ typedef struct {
         int16_t Dial;               /**< 左侧拨轮通道数据 (-660 ~ 660) */
         uint8_t S1;                 /**< 右侧开关状态 */
         uint8_t S2;                 /**< 左侧开关状态 */
-        int8_t Error;               /**< 错误标志 */
     } Remote;
 
     /**
@@ -157,6 +158,6 @@ typedef union {
  * @param Data 18 字节原始输入缓存数据指针
  * @param DBUS 解算结果存放的应用层目标结构体指针
  */
-void DBUS_Resolved(uint8_t* Data, DBUS_Typedef *DBUS);
+void DBUS_Resolved(uint8_t* Data, void *device_ptr, uint16_t size);
 
 #endif //G4_FRAMEWORK_DBUS_H

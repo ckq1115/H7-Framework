@@ -11,7 +11,7 @@
 #include "Offline_Detector.h"
 
 typedef struct {
-    int8_t ONLINE_JUDGE_TIME;
+    Offline_Check_t offline;
     int16_t Angle_last;
     int16_t Angle_now;
     int32_t round;

@@ -171,77 +171,28 @@ void WS2812_UpdateBreathing(uint16_t index, float period) {
     LED_Data[index].B = (Base_Color[index].B * factor) >> 8;
 }
 
-// 无浮点 HSV 转 RGB
-// h: 0-255, s: 0-255, v: 0-255
-void WS2812_SetHSV(uint16_t index, uint8_t h, uint8_t s, uint8_t v) {
-    uint8_t r, g, b;
-    uint8_t region, remainder, p, q, t;
+/**
+ * @brief  让指定灯珠按底色进行闪烁
+ * @param  index: LED 索引
+ * @param  interval_s: 亮灭切换的时间间隔 (s)
+ */
+void WS2812_Blink(uint16_t index, float interval_s) {
+    if (index >= MAX_LED) return;
 
-    if (s == 0) {
-        r = v; g = v; b = v;
+    static uint32_t last_tick = 0;
+    static uint8_t is_on = 1;
+    uint32_t now = HAL_GetTick();
+
+    if (now - last_tick >= (interval_s*1000)){
+        last_tick = now;
+        is_on = !is_on;
+    }
+
+    if (is_on) {
+        LED_Data[index] = Base_Color[index];
     } else {
-        region = h / 43;
-        remainder = (h - (region * 43)) * 6;
-
-        p = (v * (255 - s)) >> 8;
-        q = (v * (255 - ((s * remainder) >> 8))) >> 8;
-        t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
-
-        switch (region) {
-            case 0: r = v; g = t; b = p; break;
-            case 1: r = q; g = v; b = p; break;
-            case 2: r = p; g = v; b = t; break;
-            case 3: r = p; g = q; b = v; break;
-            case 4: r = t; g = p; b = v; break;
-            default: r = v; g = p; b = q; break;
-        }
+        LED_Data[index].R = 0;
+        LED_Data[index].G = 0;
+        LED_Data[index].B = 0;
     }
-    WS2812_SetPixel(index, r, g, b);
-}
-
-/**
- * @brief  全灯幻彩变换
- * @param  interval_ms: 多少毫秒更新一次色相 (值越大越慢)
- */
-void WS2812_RainbowCycle(uint16_t interval_ms) {
-    static uint32_t last_update_time = 0;
-    static uint8_t start_hue = 0;
-
-    // 时间没到就直接退出，不影响 main 循环其他逻辑
-    if (HAL_GetTick() - last_update_time < interval_ms) {
-        return;
-    }
-    last_update_time = HAL_GetTick();
-
-    for (uint16_t i = 0; i < MAX_LED; i++) {
-        // 让彩虹在灯条上分布开
-        uint8_t hue = (start_hue + (i * 256 / MAX_LED)) % 256;
-        WS2812_SetHSV(i, hue, 255, 255);
-    }
-
-    start_hue++; // 步进始终为 1，保证色彩过渡平滑
-}
-/**
- * @brief  流水灯效果
- * @param  r, g, b: 流水灯的主颜色
- * @param  speed: 移动速度 (ms/格)
- */
-void WS2812_WaterFlow(uint8_t r, uint8_t g, uint8_t b, uint8_t speed) {
-    static uint32_t last_time = 0;
-    static uint16_t head = 0;
-
-    if (HAL_GetTick() - last_time < speed) return;
-    last_time = HAL_GetTick();
-
-    // 1. 先让所有灯珠的亮度衰减（产生拖尾感）
-    for (uint16_t i = 0; i < MAX_LED; i++) {
-        LED_Data[i].R = LED_Data[i].R * 0.7; // 衰减系数 0.7
-        LED_Data[i].G = LED_Data[i].G * 0.7;
-        LED_Data[i].B = LED_Data[i].B * 0.7;
-    }
-
-    // 2. 更新“头”的位置并赋全色
-    WS2812_SetPixel(head, r, g, b);
-
-    head = (head + 1) % MAX_LED;
 }

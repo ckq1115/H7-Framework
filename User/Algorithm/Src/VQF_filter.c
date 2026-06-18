@@ -15,7 +15,6 @@ struct VQF_FILTER_t vqf_filter;
 
 static float vqf_square(float x) { return x * x; }
 static float vqf_max(float a, float b) { return a > b ? a : b; }
-static float vqf_min(float a, float b) { return a < b ? a : b; }
 
 static vqf_real_t vqf_norm(const vqf_real_t vec[], size_t N) {
     vqf_real_t s = 0;

@@ -7,11 +7,12 @@
 
 #include "controller.h"
 #include "fdcan.h"
+#include "Offline_Detector.h"
 
 
 typedef struct
 {
-    int8_t ONLINE_JUDGE_TIME;
+    Offline_Check_t offline;
     uint8_t  temp;          // 电机温度
     uint16_t Current;       // 电流
 

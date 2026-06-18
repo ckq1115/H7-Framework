@@ -18,7 +18,7 @@ uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
 MOTOR_Typdef All_Motor;
 
 //Offline_check
-All_Offline_Detector_t All_Offline_Detector;
+
 
 uint32_t stm32_id[3];
 void Get_UID(uint32_t *uid) {
@@ -32,6 +32,8 @@ void All_Init() {
 
     MX_USB_DEVICE_Init();
     UART_ReceiveToIdle_DMA(&huart5,DBUS_RX_DATA,18);//DBUS串口
+    UART_ReceiveToIdle_DMA(&huart7, VT13_RX_DATA, 21);//图传链路串口
+    UART_ReceiveToIdle_DMA(&huart1, Referee_Rx_Buf[0], REFEREE_RXFRAME_LENGTH);//裁判系统串口
 
     FDCAN_Config(&hfdcan1, FDCAN_RX_FIFO0);
     FDCAN_Config(&hfdcan2, FDCAN_RX_FIFO1);

@@ -52,8 +52,9 @@ void BM_Send_torque(FDCAN_HandleTypeDef *hcan, uint16_t stdid, float torque1, fl
 // ID 0x50 + ID  （原BM_Parse_drive）
 void BM_Motor_Resolve(void *instance, uint8_t *rx_data)
 {
-    BM_MOTOR_DATA_Typedef *DATA = &((BM_MOTOR_Typedef *)instance)->DATA;
+    BM_MOTOR_DATA_Typedef *DATA = instance;
 
+    DATA->offline.last_feed_tick = HAL_GetTick();
     int16_t data[4] = {0};
     int16_t diff = 0;
     data[0] = ((int16_t)(rx_data[0] << 8) | rx_data[1]);

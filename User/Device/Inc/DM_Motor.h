@@ -7,6 +7,7 @@
 #include "BSP_FDCAN.h"
 #include "Horizon_MATH.h"
 #include "controller.h"
+#include "Offline_Detector.h"
 
 
 // --- 模式偏移地址 ---
@@ -27,7 +28,7 @@
 #define T_MAX    10.0f
 
 typedef struct {
-    int8_t ONLINE_JUDGE_TIME;
+    Offline_Check_t offline;
     int id;
     int state;
     int p_int;
@@ -55,10 +56,7 @@ typedef struct {
     uint16_t Stuck_Flag[2];
     int16_t Laps;
     float dt;
-
-    uint16_t initialAngle;
     float ralativeAngle;
-    int16_t round;
 } DM_MOTOR_DATA_Typdef;
 
 typedef struct {

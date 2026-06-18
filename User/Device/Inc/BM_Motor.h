@@ -3,10 +3,12 @@
 
 #include "main.h"
 #include "controller.h"
+#include "Offline_Detector.h"
 
 
 typedef struct report
 {
+
 	int16_t Speed;		 // 0x01 中心轴速度*10
 	int16_t Current_bus; // 0x02 母线电流*100
 	int16_t Current;	 // 0x03 IQ*100
@@ -28,7 +30,7 @@ extern reporter BM_reporter1;
 
 typedef struct 
 {
-	int8_t ONLINE_JUDGE_TIME;
+	Offline_Check_t offline;
 
 	uint16_t ID;
 	float aim;

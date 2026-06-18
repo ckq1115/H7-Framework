@@ -13,13 +13,13 @@
  * @brief 电容接收数据结构体
  */
 typedef struct {
+    Offline_Check_t offline;
     uint8_t  cap_key;       // FSBB开关状态
     uint8_t  cap_state;     // 状态位 (0:正常, 1:故障)
     float    bat_voltage;
     float    nowPower;
     uint8_t  Cap_Capacity;  // 电容容量
     uint8_t  check_code;    // 校验位 (0xAA)
-    uint8_t  ONLINE_JUDGE_TIME;
 } CapRxData_t;
 
 /**

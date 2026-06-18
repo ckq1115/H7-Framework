@@ -6,7 +6,6 @@
 #ifndef H7_FRAMEWORK_VQF_FILTER_H
 #define H7_FRAMEWORK_VQF_FILTER_H
 
-#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "All_define.h"

@@ -30,8 +30,6 @@ void WS2812_Clear(void);
 void WS2812_Send(void);
 
 void WS2812_UpdateBreathing(uint16_t index, float period);
-void WS2812_SetHSV(uint16_t index, uint8_t h, uint8_t s, uint8_t v);
-void WS2812_RainbowCycle(uint16_t interval_ms);
-void WS2812_WaterFlow(uint8_t r, uint8_t g, uint8_t b, uint8_t speed);
+void WS2812_Blink(uint16_t index, float interval_s);
 
 #endif //H7_FRAMEWORK_WS2812_H

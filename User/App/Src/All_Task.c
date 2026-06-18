@@ -3,15 +3,13 @@
 //
 #include "All_Task.h"
 
-
-static uint32_t INS_DWT_Count = 0; // DWT计数基准
-static float imu_period_s = 0.0f;
-
 void IMU_Task(void *argument)
 {
     (void)argument;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xTimeIncrement = pdMS_TO_TICKS(1);
+    static uint32_t INS_DWT_Count = 0; // DWT计数基准
+    static float imu_period_s = 0.0f;
     INS_DWT_Count = DWT->CYCCNT;
     for(;;)
     {

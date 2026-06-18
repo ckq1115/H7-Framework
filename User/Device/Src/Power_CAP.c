@@ -11,22 +11,22 @@ void Power_Cap_Rx(void *instance, uint8_t *rx_buf)
 {
     if (instance == NULL || rx_buf == NULL) return;
 
-    Cap_t *cap_ptr = (Cap_t *)instance;
+    CapRxData_t *cap_ptr = instance;
 
     if (rx_buf[7] == 0xAA)
     {
-        cap_ptr->get.cap_key   = rx_buf[0];
-        cap_ptr->get.cap_state = rx_buf[1];
+        cap_ptr->offline.last_feed_tick = HAL_GetTick();
+        cap_ptr->cap_key   = rx_buf[0];
+        cap_ptr->cap_state = rx_buf[1];
 
         uint16_t raw_voltage = ((uint16_t)rx_buf[2] << 8) | rx_buf[3];
         uint16_t raw_power   = ((uint16_t)rx_buf[4] << 8) | rx_buf[5];
 
-        cap_ptr->get.bat_voltage = (float)raw_voltage / 100.0f;
-        cap_ptr->get.nowPower    = (float)raw_power / 100.0f;
+        cap_ptr->bat_voltage = (float)raw_voltage / 100.0f;
+        cap_ptr->nowPower    = (float)raw_power / 100.0f;
 
-        cap_ptr->get.Cap_Capacity = rx_buf[6];
-        cap_ptr->get.check_code = rx_buf[7];
-        cap_ptr->get.ONLINE_JUDGE_TIME = 10;
+        cap_ptr->Cap_Capacity = rx_buf[6];
+        cap_ptr->check_code = rx_buf[7];
     }
 }
 
