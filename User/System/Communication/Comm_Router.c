@@ -1,0 +1,118 @@
+//
+// Created by CaoKangqi on 2026/6/17.
+#include "Comm_Router.h"
+#include "All_Motor.h"
+#include "BSP_UART.h"
+#include "DBUS.h"
+#include "IMU_Task.h"
+#include "Power_CAP.h"
+#include "Vofa.h"
+#include "VT13.h"
+#include "WS2812.h"
+
+/**
+ *
+ */
+static const CAN_Rx_Route_t CAN_Rx_Config_Table[] = {
+    /* ----- FDCAN1 ----- */
+    //           总线        ID             目标结构体指针                          解析函数
+    {FDCAN1, 0x201, &All_Motor.DJI_3508_Chassis[0].DATA, DJI_Motor_Resolve},
+    {FDCAN1, 0x202, &All_Motor.DJI_3508_Chassis[1].DATA, DJI_Motor_Resolve},
+    {FDCAN1, 0x203, &All_Motor.DJI_3508_Chassis[2].DATA, DJI_Motor_Resolve},
+    {FDCAN1, 0x204, &All_Motor.DJI_3508_Chassis[3].DATA, DJI_Motor_Resolve},
+    {FDCAN1, 0x206, &All_Motor.DJI_6020_Pitch.DATA,      DJI_Motor_Resolve},
+
+    /* ----- FDCAN2 ----- */
+    {FDCAN2, 0x205, &All_Motor.DJI_6020_Steer[0].DATA,   DJI_Motor_Resolve},
+    {FDCAN2, 0x206, &All_Motor.DJI_6020_Steer[1].DATA,   DJI_Motor_Resolve},
+    {FDCAN2, 0x207, &All_Motor.DJI_6020_Steer[2].DATA,   DJI_Motor_Resolve},
+    {FDCAN2, 0x208, &All_Motor.DJI_6020_Steer[3].DATA,   DJI_Motor_Resolve},
+
+    /* ----- FDCAN3 ----- */
+    {FDCAN3, 0x301, &All_Motor.DM4310_Feed.DATA,         DM_1to4_Resolve},
+    {FDCAN3, 0x202, &All_Motor.DJI_3508_Pull.DATA,       DJI_Motor_Resolve},
+    {FDCAN3, 0x203, &All_Motor.DJI_3508_Yaw.DATA,        DJI_Motor_Resolve},
+    {FDCAN3, 0x288, &cap.get,                            Power_Cap_Rx},
+};
+
+static const UART_Rx_Route_t UART_Rx_Config_Table[] = {
+    // 总线                  预期长度      主Buffer           备用Buffer(双缓冲)                  DMA重载长度                       目标结构体指针       解析函数
+    {&huart5,  18, DBUS_RX_DATA,      NULL,              18,                     &DBUS, DBUS_Resolved},
+    {&huart7,  21, VT13_RX_DATA,      NULL,              21,                     &VT13, VT13_Resolved},
+    {&huart1,  0, Referee_Rx_Buf[0], Referee_Rx_Buf[1], REFEREE_RXFRAME_LENGTH, NULL,  Referee_System_Frame_Update},
+};
+
+void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+    if (htim->Instance == TIM4) {
+        WS2812_UpdateBreathing(0,3.0f);
+        WS2812_Send();
+        DWT_SysTimeUpdate();
+        Offline_Monitor();
+        VOFA_JustFloat(4,IMU_Data.pitch,IMU_Data.roll,IMU_Data.yaw,0);
+    }
+}
+
+void CAN_Router_Init(void)
+{
+    size_t table_size = sizeof(CAN_Rx_Config_Table) / sizeof(CAN_Rx_Route_t);
+    for (size_t i = 0; i < table_size; i++)
+    {
+        FDCAN_HandleTypeDef temp_hfdcan = {0};
+        temp_hfdcan.Instance = CAN_Rx_Config_Table[i].instance;
+        BSP_CAN_Register_Slot(
+            &temp_hfdcan,
+            CAN_Rx_Config_Table[i].id,
+            CAN_Rx_Config_Table[i].device_ptr,
+            (BSP_CAN_Callback_t)CAN_Rx_Config_Table[i].resolve
+        );
+    }
+}
+
+void UART_Router_Init(void)
+{
+    size_t table_size = sizeof(UART_Rx_Config_Table) / sizeof(UART_Rx_Route_t);
+    for (size_t i = 0; i < table_size; i++)
+    {
+        UART_ReceiveToIdle_DMA(UART_Rx_Config_Table[i].huart,
+                               UART_Rx_Config_Table[i].rx_buf0,
+                               UART_Rx_Config_Table[i].dma_rx_size);
+    }
+}
+
+void UART_App_Rx_Dispatch(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
+{
+    size_t table_size = sizeof(UART_Rx_Config_Table) / sizeof(UART_Rx_Route_t);
+    for (size_t i = 0; i < table_size; i++)
+    {
+        if (huart == UART_Rx_Config_Table[i].huart)
+        {
+            uint8_t *next_buf = UART_Rx_Config_Table[i].rx_buf0;
+            if (UART_Rx_Config_Table[i].rx_buf1 != NULL) {
+                next_buf = (pData == UART_Rx_Config_Table[i].rx_buf0) ?
+                           UART_Rx_Config_Table[i].rx_buf1 :
+                           UART_Rx_Config_Table[i].rx_buf0;
+            }
+            UART_ReceiveToIdle_DMA(huart, next_buf, UART_Rx_Config_Table[i].dma_rx_size);
+            if (UART_Rx_Config_Table[i].expected_size != 0 && Size != UART_Rx_Config_Table[i].expected_size) {
+                return;
+            }
+            if (UART_Rx_Config_Table[i].resolve != NULL) {
+                UART_Rx_Config_Table[i].resolve(pData, UART_Rx_Config_Table[i].device_ptr, Size);
+            }
+            return;
+        }
+    }
+}
+
+void UART_App_Error_Dispatch(UART_HandleTypeDef *huart)
+{
+    size_t table_size = sizeof(UART_Rx_Config_Table) / sizeof(UART_Rx_Route_t);
+    for (size_t i = 0; i < table_size; i++)
+    {
+        if (huart == UART_Rx_Config_Table[i].huart)
+        {
+            UART_ReceiveToIdle_DMA(huart, UART_Rx_Config_Table[i].rx_buf0, UART_Rx_Config_Table[i].dma_rx_size);
+            return;
+        }
+    }
+}

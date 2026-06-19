@@ -1,0 +1,8 @@
+//
+// Created by CaoKangqi on 2026/6/19.
+//
+
+#ifndef H7_FRAMEWORK_SYSTEM_STATE_H
+#define H7_FRAMEWORK_SYSTEM_STATE_H
+
+#endif //H7_FRAMEWORK_SYSTEM_STATE_H

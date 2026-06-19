@@ -150,24 +150,6 @@ float uint_to_float(int x_int, float x_min, float x_max, int bits)
   return ((float)x_int)*span/((float)((1<<bits)-1)) + offset;
 }
 
-float get_vbus_input(uint16_t value)
-{
-	return ((float)value*3.3f/65535)*11.0f;
-}
-
-void convertAngleToIndex(float angle, float *index) {
-    // 角度标准化到0-360度
-    while (angle < 0) {
-        angle += 360;
-    }
-    while (angle >= 360) {
-        angle -= 360;
-    }
-
-    // 将角度转换为0-8191的索引
-    *index = (angle / 360.0f * 8192.0f);
-}
-
 /**
  * @brief CORDIC Atan2 快速函数
  */

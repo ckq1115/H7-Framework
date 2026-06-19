@@ -22,14 +22,6 @@ float Hex_To_Float(uint32_t *Byte,int num);
 uint32_t FloatTohex(float HEX);
 int float_to_uint(float x_float, float x_min, float x_max, int bits);
 float uint_to_float(int x_int, float x_min, float x_max, int bits);
-float get_vbus_input(uint16_t value);
-void convertAngleToIndex(float angle, float *index) ;
-
-typedef struct
-{
-    uint16_t adc_val[2];
-    float vbus;
-}V_Input_t;
 
 float CORDIC_Atan2_Fast(float y, float x);
 float CORDIC_Sin_Fast(float angle_deg);

@@ -5,6 +5,12 @@
 #ifndef H7_FRAMEWORK_VOFA_H
 #define H7_FRAMEWORK_VOFA_H
 
-void VOFA_justfloat(float a,float b,float c,float d,float e,float f,float g,float h,float j,float k);
+#include <stdint.h>
+
+#define VOFA_MAX_CHANNELS      20    // JustFloat 单次发送的最大通道数
+#define VOFA_TEXT_BUF_SIZE     256   // FireWater 文本协议的最大单行缓冲区大小
+
+void VOFA_JustFloat(uint8_t channels_num, ...);
+void VOFA_FireWater(uint8_t channels_num, ...);
 
 #endif //H7_FRAMEWORK_VOFA_H

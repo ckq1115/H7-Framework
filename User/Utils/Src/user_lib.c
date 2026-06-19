@@ -2,13 +2,11 @@
 // Created by CaoKangqi on 2026/1/30.
 //
 #include "string.h"
-#include "../Inc/user_lib.h"
+#include "user_lib.h"
 
 #include <stdlib.h>
 
 #include "math.h"
-
-uint8_t GlobalDebugMode = 7;
 
 //快速开方
 float Sqrt(float x)
