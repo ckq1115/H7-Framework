@@ -38,7 +38,7 @@ void All_Init() {
     FDCAN_Config(&hfdcan1, FDCAN_RX_FIFO0);
     FDCAN_Config(&hfdcan2, FDCAN_RX_FIFO1);
     FDCAN_Config(&hfdcan3, FDCAN_RX_FIFO0);
-
+    CAN_Hash_Table_Init();
     WS2812_Init();
     BMI088_init();
 

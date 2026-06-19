@@ -7,7 +7,6 @@
 #include <string.h>
 
 #define EPS FLT_EPSILON
-#define M_SQRT2     1.41421356237309504880f
 #define M_PIf       3.14159265358979323846f
 
 struct VQF_FILTER_t vqf_filter;

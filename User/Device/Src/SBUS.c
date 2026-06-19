@@ -70,7 +70,7 @@ SBUS_ERROR_CODE_TypeDef SBUS_decode(uint8_t* raw, SBUS_DATA_typedef* data, uint8
 
 int16_t SBUS_GetChannelValue(SBUS_DATA_typedef* data, SBUS_Channel_t Channel)
 {
-  if (data == NULL || Channel > 16 || Channel < 0)
+  if (data == NULL || Channel > 16)
   {
     return 0;
   }

@@ -6,30 +6,30 @@
 static const CAN_Rx_Route_t CAN_Rx_Config_Table[] = {
     /* ----- FDCAN1 ----- */
     //           总线        ID             目标结构体指针                          解析函数                   离线超时时间       所属分组
-    {FDCAN1, 0x201, &All_Motor.DJI_3508_Chassis[0].DATA, DJI_Motor_Resolve,  20,   CHASSIS},
-    {FDCAN1, 0x202, &All_Motor.DJI_3508_Chassis[1].DATA, DJI_Motor_Resolve,  20,   CHASSIS},
-    {FDCAN1, 0x203, &All_Motor.DJI_3508_Chassis[2].DATA, DJI_Motor_Resolve,  20,   CHASSIS},
-    {FDCAN1, 0x204, &All_Motor.DJI_3508_Chassis[3].DATA, DJI_Motor_Resolve,  20,   CHASSIS},
-    {FDCAN1, 0x206, &All_Motor.DJI_6020_Pitch.DATA,      DJI_Motor_Resolve,  20,   GIMBAL},
+    {FDCAN1, 0x201, &All_Motor.DJI_3508_Chassis[0].DATA, DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
+    {FDCAN1, 0x202, &All_Motor.DJI_3508_Chassis[1].DATA, DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
+    {FDCAN1, 0x203, &All_Motor.DJI_3508_Chassis[2].DATA, DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
+    {FDCAN1, 0x204, &All_Motor.DJI_3508_Chassis[3].DATA, DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
+    {FDCAN1, 0x206, &All_Motor.DJI_6020_Pitch.DATA,      DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   GIMBAL},
 
     /* ----- FDCAN2 ----- */
-    {FDCAN2, 0x205, &All_Motor.DJI_6020_Steer[0].DATA,   DJI_Motor_Resolve,  20,   CHASSIS},
-    {FDCAN2, 0x206, &All_Motor.DJI_6020_Steer[1].DATA,   DJI_Motor_Resolve,  20,   CHASSIS},
-    {FDCAN2, 0x207, &All_Motor.DJI_6020_Steer[2].DATA,   DJI_Motor_Resolve,  20,   CHASSIS},
-    {FDCAN2, 0x208, &All_Motor.DJI_6020_Steer[3].DATA,   DJI_Motor_Resolve,  20,   CHASSIS},
+    {FDCAN2, 0x205, &All_Motor.DJI_6020_Steer[0].DATA,   DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
+    {FDCAN2, 0x206, &All_Motor.DJI_6020_Steer[1].DATA,   DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
+    {FDCAN2, 0x207, &All_Motor.DJI_6020_Steer[2].DATA,   DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
+    {FDCAN2, 0x208, &All_Motor.DJI_6020_Steer[3].DATA,   DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   CHASSIS},
 
     /* ----- FDCAN3 ----- */
-    {FDCAN2, 0x301, &All_Motor.DM4310_Feed.DATA,         DM_1to4_Resolve,    20,   SHOOT},
-    {FDCAN3, 0x202, &All_Motor.DJI_3508_Pull.DATA,       DJI_Motor_Resolve,  20,   SHOOT},
-    {FDCAN3, 0x203, &All_Motor.DJI_3508_Yaw.DATA,        DJI_Motor_Resolve,  20,   GIMBAL},
-    {FDCAN3, 0x288, &cap.get,                     Power_Cap_Rx,       20,         GROUP_NONE},
+    {FDCAN2, 0x301, &All_Motor.DM4310_Feed.DATA,         DM_1to4_Resolve,    MOTOR_OFFLINE_TIME,   SHOOT},
+    {FDCAN3, 0x202, &All_Motor.DJI_3508_Pull.DATA,       DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   SHOOT},
+    {FDCAN3, 0x203, &All_Motor.DJI_3508_Yaw.DATA,        DJI_Motor_Resolve,  MOTOR_OFFLINE_TIME,   GIMBAL},
+    {FDCAN3, 0x288, &cap.get,                     Power_Cap_Rx,       CAP_OFFLINE_TIME,         GROUP_NONE},
 };
 
 static const UART_Rx_Route_t UART_Rx_Config_Table[] = {
     // 总线    预期长度   主Buffer           备用Buffer(双缓冲)   DMA重载长度              目标结构体指针   解析函数                 超时    所属分组
-    {UART5,  18,DBUS_RX_DATA,      NULL,               18,                     &DBUS,         DBUS_Resolved,    50,   GROUP_NONE},
-    {UART7,  21,VT13_RX_DATA,      NULL,               21,                     &VT13,         VT13_Resolved,    50,   GROUP_NONE},
-    {USART1, 0, Referee_Rx_Buf[0], Referee_Rx_Buf[1],  REFEREE_RXFRAME_LENGTH, NULL,          Referee_System_Frame_Update, 100,  GROUP_NONE},
+    {UART5,  18,DBUS_RX_DATA,      NULL,               18,                     &DBUS,DBUS_Resolved,    DBUS_OFFLINE_TIME,   GROUP_NONE},
+    {UART7,  21,VT13_RX_DATA,      NULL,               21,                     &VT13,VT13_Resolved,    DBUS_OFFLINE_TIME,   GROUP_NONE},
+    {USART1, 0, Referee_Rx_Buf[0], Referee_Rx_Buf[1],  REFEREE_RXFRAME_LENGTH, NULL, Referee_System_Frame_Update, 100,  GROUP_NONE},
 };
 
 void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -41,21 +41,19 @@ void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     }
 }
 
-void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, uint8_t *data, uint32_t len)
+void CAN_Hash_Table_Init(void)
 {
-    (void)len;
     size_t table_size = sizeof(CAN_Rx_Config_Table) / sizeof(CAN_Rx_Route_t);
-
     for (size_t i = 0; i < table_size; i++)
     {
-        if ((hfdcan->Instance == CAN_Rx_Config_Table[i].instance) &&
-            (identifier == CAN_Rx_Config_Table[i].id))
-        {
-            if (CAN_Rx_Config_Table[i].resolve != NULL){
-                CAN_Rx_Config_Table[i].resolve(CAN_Rx_Config_Table[i].device_ptr, data);
-            }
-            return;
-        }
+        FDCAN_HandleTypeDef temp_hfdcan = {0};
+        temp_hfdcan.Instance = CAN_Rx_Config_Table[i].instance;
+        BSP_CAN_Register_Slot(
+            &temp_hfdcan,
+            CAN_Rx_Config_Table[i].id,
+            CAN_Rx_Config_Table[i].device_ptr,
+            (BSP_CAN_Callback_t)CAN_Rx_Config_Table[i].resolve // 类型强转，抹平应用层函数类型
+        );
     }
 }
 
@@ -150,6 +148,5 @@ bool Is_Group_Online(Device_Group_e group)
             }
         }
     }
-
     return true;
 }

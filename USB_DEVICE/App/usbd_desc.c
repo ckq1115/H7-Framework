@@ -140,6 +140,7 @@ USBD_DescriptorsTypeDef HS_Desc =
 , USBD_HS_SerialStrDescriptor
 , USBD_HS_ConfigStrDescriptor
 , USBD_HS_InterfaceStrDescriptor
+  , NULL
 };
 
 #if defined ( __ICCARM__ ) /* IAR Compiler */

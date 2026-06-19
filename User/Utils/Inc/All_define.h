@@ -23,12 +23,12 @@
 //设备在线
 #define DEVICE_ONLINE  1
 //电机离线检测时间
-#define MOTOR_OFFLINE_TIME 15;
+#define MOTOR_OFFLINE_TIME 15
 //电容离线检测时间
-#define CAP_OFFLINE_TIME 15;
+#define CAP_OFFLINE_TIME 15
 //遥控离线检测时间
-#define DBUS_OFFLINE_TIME 10;
+#define DBUS_OFFLINE_TIME 50
 
-#define INIT_ANGLE 0;
+#define INIT_ANGLE 0
 
 #endif //H7_FRAMEWORK_ALL_DEFINE_H

@@ -1,5 +1,7 @@
 #include "BSP_FDCAN.h"
 
+#include "BSP_DWT.h"
+
 /**
  * @brief FDCAN外设配置函数
  * @param hfdcan FDCAN句柄
@@ -176,18 +178,86 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
             HAL_FDCAN_Stop(hfdcan);
             if (HAL_FDCAN_Start(hfdcan) == HAL_OK)
             {
-                HAL_FDCAN_ActivateNotification(hfdcan,
-                                               (target_fifo == FDCAN_RX_FIFO0) ? FDCAN_IT_RX_FIFO0_NEW_MESSAGE : FDCAN_IT_RX_FIFO1_NEW_MESSAGE,
-                                               0);
-                HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_BUS_OFF | FDCAN_IT_ERROR_PASSIVE | FDCAN_IT_ERROR_WARNING, 0);
+                uint32_t it_source = FDCAN_IT_BUS_OFF |
+                                     FDCAN_IT_ARB_PROTOCOL_ERROR |
+                                     FDCAN_IT_DATA_PROTOCOL_ERROR;
+                if (target_fifo == FDCAN_RX_FIFO0)
+                {
+                    it_source |= FDCAN_IT_RX_FIFO0_NEW_MESSAGE |
+                                 FDCAN_IT_RX_FIFO0_FULL |
+                                 FDCAN_IT_RX_FIFO0_MESSAGE_LOST;
+                }
+                else // FDCAN_RX_FIFO1
+                {
+                    it_source |= FDCAN_IT_RX_FIFO1_NEW_MESSAGE |
+                                 FDCAN_IT_RX_FIFO1_FULL |
+                                 FDCAN_IT_RX_FIFO1_MESSAGE_LOST;
+                }
+                HAL_FDCAN_ActivateNotification(hfdcan, it_source, 0);
             }
         }
     }
 }
 
-__weak void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, uint8_t *data, uint32_t len)
+#define CAN_HASH_SIZE       32
+#define CAN_HASH_MASK       (CAN_HASH_SIZE - 1)
+#define CAN_BUS_NUM         3
+
+// 哈希表
+static BSP_CAN_Hash_Node_t BSP_Hash_Table[CAN_BUS_NUM][CAN_HASH_SIZE] = {0};
+
+static inline uint8_t Get_CAN_Bus_Index(FDCAN_HandleTypeDef *hfdcan)
 {
-    (void)hfdcan; (void)identifier; (void)data; (void)len;
+    if (hfdcan->Instance == FDCAN1) return 0;
+    if (hfdcan->Instance == FDCAN2) return 1;
+    if (hfdcan->Instance == FDCAN3) return 2;
+    return 0;
+}
+
+/**
+ * @brief 动态注册槽位函数：供应用层初始化时调用，用于填充哈希表
+ */
+void BSP_CAN_Register_Slot(FDCAN_HandleTypeDef *hfdcan, uint32_t id, void *device_ptr, BSP_CAN_Callback_t callback)
+{
+    uint8_t bus_idx = Get_CAN_Bus_Index(hfdcan);
+    uint32_t hash_idx = id & CAN_HASH_MASK;
+    uint32_t start_idx = hash_idx;
+    // 线性探测找空位
+    while (BSP_Hash_Table[bus_idx][hash_idx].id != 0)
+    {
+        if (BSP_Hash_Table[bus_idx][hash_idx].id == id) {
+            break; // 如果重复注册同一个 ID，直接覆盖
+        }
+        hash_idx = (hash_idx + 1) & CAN_HASH_MASK;
+        if (hash_idx == start_idx) return;
+    }
+    // 填入纯净的抽象硬件映射数据
+    BSP_Hash_Table[bus_idx][hash_idx].id = id;
+    BSP_Hash_Table[bus_idx][hash_idx].device_ptr = device_ptr;
+    BSP_Hash_Table[bus_idx][hash_idx].resolve = callback;
+}
+
+/**
+ * @brief O(1) 级中断分发
+ */
+void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, uint8_t *data, uint32_t len)
+{
+    (void)len;
+    uint8_t bus_idx = Get_CAN_Bus_Index(hfdcan);
+    uint32_t hash_idx = identifier & CAN_HASH_MASK;
+    uint32_t start_idx = hash_idx;
+    while (BSP_Hash_Table[bus_idx][hash_idx].id != 0)
+    {
+        if (BSP_Hash_Table[bus_idx][hash_idx].id == identifier)
+        {
+            if (BSP_Hash_Table[bus_idx][hash_idx].resolve != NULL) {
+                BSP_Hash_Table[bus_idx][hash_idx].resolve(BSP_Hash_Table[bus_idx][hash_idx].device_ptr, data);
+            }
+            return;
+        }
+        hash_idx = (hash_idx + 1) & CAN_HASH_MASK;
+        if (hash_idx == start_idx) return;
+    }
 }
 
 CAN_Stats_t can1_stats;
@@ -198,9 +268,8 @@ CAN_Stats_t can3_stats;
 static inline void FDCAN_Rx_FIFO_Process(FDCAN_HandleTypeDef *hfdcan, uint32_t fifo, uint32_t its, CAN_Stats_t *stats)
 {
     FDCAN_RxHeaderTypeDef rx_header;
-    uint8_t rx_data[8];
+    uint8_t rx_data[64];
     uint32_t fill_level;
-
     // 统计 FIFO 状态
     if (stats) {
         uint32_t full_it = (fifo == FDCAN_RX_FIFO0) ? FDCAN_IT_RX_FIFO0_FULL : FDCAN_IT_RX_FIFO1_FULL;
@@ -208,7 +277,6 @@ static inline void FDCAN_Rx_FIFO_Process(FDCAN_HandleTypeDef *hfdcan, uint32_t f
         if (its & full_it)  stats->fifo_full_count++;
         if (its & lost_it)  stats->msg_lost_count++;
     }
-
     // 循环读取 FIFO 确保不丢帧
     while ((fill_level = HAL_FDCAN_GetRxFifoFillLevel(hfdcan, fifo)) > 0)
     {
@@ -217,9 +285,7 @@ static inline void FDCAN_Rx_FIFO_Process(FDCAN_HandleTypeDef *hfdcan, uint32_t f
             break;
         }
         if (stats) stats->rx_count++;
-
         CAN_App_Frame_Dispatch(hfdcan, rx_header.Identifier, rx_data, DLC_To_Bytes(rx_header.DataLength));
-
         if (fill_level > 64) break;
     }
 }

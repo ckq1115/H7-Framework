@@ -21,7 +21,7 @@ typedef struct {
 
 typedef void (*UART_Resolve_Func_t)(uint8_t *data, void *device_ptr, uint16_t size);
 
-void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, uint8_t *data, uint32_t len);
+void CAN_Hash_Table_Init(void);
 
 typedef struct {
     USART_TypeDef *instance;        // 对应的硬件总线：UART5 / USART1 等

@@ -22,6 +22,15 @@ extern CAN_Stats_t can3_stats;
 
 void CAN_App_Frame_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t identifier, uint8_t *data, uint32_t len);
 
+typedef void (*BSP_CAN_Callback_t)(void *device_ptr, uint8_t *data);
+
+typedef struct {
+    uint32_t id;
+    void *device_ptr;
+    BSP_CAN_Callback_t resolve;
+} BSP_CAN_Hash_Node_t;
+
+void BSP_CAN_Register_Slot(FDCAN_HandleTypeDef *hfdcan, uint32_t id, void *device_ptr, BSP_CAN_Callback_t callback);
 typedef FDCAN_HandleTypeDef hcan_t;
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan, uint32_t fifo);
 extern uint8_t FDCAN_Send_Msg(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, uint32_t len);
