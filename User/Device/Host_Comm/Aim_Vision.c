@@ -3,6 +3,8 @@
 //
 #include "Aim_Vision.h"
 #include <string.h>
+
+#include "All_define.h"
 #include "stm32h7xx_hal.h"
 
 // 使用共用体处理浮点数与字节的转换
@@ -38,10 +40,10 @@ bool Vision_Decode(uint8_t *rx_buf, Vision_Recv_t *recv_data)
     recv_data->state        = (rx_buf[9] & 0x07);
     // 解析 Pitch 规划值 (除以57.3将角度转为弧度，保留原代码逻辑)
     memcpy(f_cvt.buf, &rx_buf[10], 4);
-    recv_data->pitch_plan = f_cvt.f / 57.3f;
+    recv_data->pitch_plan = f_cvt.f * DEG2RAD;
     // 解析 Yaw 规划值
     memcpy(f_cvt.buf, &rx_buf[14], 4);
-    recv_data->yaw_plan = f_cvt.f / 57.3f;
+    recv_data->yaw_plan = f_cvt.f * DEG2RAD;
     return true;
 }
 

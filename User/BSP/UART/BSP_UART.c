@@ -4,6 +4,55 @@
 #include "stm32h7xx_hal.h"
 #include "BSP_UART.h"
 
+#define MAX_UART_BUS_NUM  11 // H723最大支持到 UART10 (索引使用10)
+
+// 驱动内部私有的路由槽位映射表，完全由 BSP 层自己维护
+static BSP_UART_Slot_t BSP_UART_Table[MAX_UART_BUS_NUM] = {0};
+static uint8_t g_uart_registered_mask[MAX_UART_BUS_NUM] = {0}; // 注册标记掩码
+
+/**
+ * @brief 辅助函数：根据寄存器基地址快速获取数组索引
+ */
+static inline uint8_t Get_UART_Bus_Index(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1)  return 1;
+    if (huart->Instance == USART2)  return 2;
+    if (huart->Instance == USART3)  return 3;
+    if (huart->Instance == UART4)   return 4;
+    if (huart->Instance == UART5)   return 5;
+    if (huart->Instance == USART6)  return 6;
+    if (huart->Instance == UART7)   return 7;
+    if (huart->Instance == UART8)   return 8;
+    if (huart->Instance == UART9)   return 9;
+    if (huart->Instance == USART10) return 10;
+    return 0; // 未知或未定义的串口
+}
+
+/**
+ * @brief   UART 槽位注册函数：完成硬件层信息登记并直接开启 DMA 接收
+ */
+void BSP_UART_Register_Slot(UART_HandleTypeDef *huart,
+                            uint16_t expected_size,
+                            uint8_t *rx_buf0,
+                            uint8_t *rx_buf1,
+                            uint16_t dma_size,
+                            void *device_ptr,
+                            BSP_UART_Callback_t callback)
+{
+    uint8_t idx = Get_UART_Bus_Index(huart);
+    if (idx == 0 || idx >= MAX_UART_BUS_NUM) return;
+
+    BSP_UART_Table[idx].rx_buf0       = rx_buf0;
+    BSP_UART_Table[idx].rx_buf1       = rx_buf1;
+    BSP_UART_Table[idx].dma_rx_size   = dma_size;
+    BSP_UART_Table[idx].expected_size = expected_size;
+    BSP_UART_Table[idx].device_ptr    = device_ptr; // 存下应用层变量地址
+    BSP_UART_Table[idx].resolve       = callback;
+    g_uart_registered_mask[idx]       = 1;
+
+    UART_ReceiveToIdle_DMA(huart, rx_buf0, dma_size);
+}
+
 /**
  * @brief   UART DMA 空闲中断接收
  * @param  huart: HAL串口句柄指针
@@ -36,23 +85,35 @@ HAL_StatusTypeDef UART_ReceiveToIdle_DMA(UART_HandleTypeDef *huart, uint8_t *pDa
     return HAL_OK;
 }
 
-
-__weak void UART_App_Rx_Dispatch(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
-{
-    (void)huart; (void)pData; (void)Size;
-}
-
-__weak void UART_App_Error_Dispatch(UART_HandleTypeDef *huart) {
-    (void)huart;
-}
+/**
+ * @brief HAL库空闲中断回调函数 (由 BSP 统一接管分发)
+ */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-    // 将事件透传给应用层分发器
-    UART_App_Rx_Dispatch(huart, huart->pRxBuffPtr, Size);
+    uint8_t idx = Get_UART_Bus_Index(huart);
+    if (idx == 0 || g_uart_registered_mask[idx] == 0) return;
+
+    BSP_UART_Slot_t *slot = &BSP_UART_Table[idx];
+    uint8_t *pData = huart->pRxBuffPtr;
+
+    uint8_t *next_buf = slot->rx_buf0;
+    if (slot->rx_buf1 != NULL) {
+        next_buf = (pData == slot->rx_buf0) ? slot->rx_buf1 : slot->rx_buf0;
+    }
+    UART_ReceiveToIdle_DMA(huart, next_buf, slot->dma_rx_size);
+
+    if (slot->expected_size != 0 && Size != slot->expected_size) return;
+    if (slot->resolve != NULL) {
+        slot->resolve(pData, slot->device_ptr, Size);
+    }
 }
 
+/**
+ * @brief HAL库串口错误回调函数 (由 BSP 统一自动重启，防止死机)
+ */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-    // 将错误事件透传给应用层分发器
-    UART_App_Error_Dispatch(huart);
+    uint8_t idx = Get_UART_Bus_Index(huart);
+    if (idx == 0 || g_uart_registered_mask[idx] == 0) return;
+    UART_ReceiveToIdle_DMA(huart, BSP_UART_Table[idx].rx_buf0, BSP_UART_Table[idx].dma_rx_size);
 }

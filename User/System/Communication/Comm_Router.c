@@ -6,13 +6,11 @@
 #include "DBUS.h"
 #include "IMU_Task.h"
 #include "Power_CAP.h"
+#include "System_State.h"
 #include "Vofa.h"
 #include "VT13.h"
 #include "WS2812.h"
 
-/**
- *
- */
 static const CAN_Rx_Route_t CAN_Rx_Config_Table[] = {
     /* ----- FDCAN1 ----- */
     //           总线        ID             目标结构体指针                          解析函数
@@ -48,6 +46,7 @@ void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         WS2812_Send();
         DWT_SysTimeUpdate();
         Offline_Monitor();
+        System_State_Update(&DBUS.offline);
         VOFA_JustFloat(4,IMU_Data.pitch,IMU_Data.roll,IMU_Data.yaw,0);
     }
 }
@@ -63,7 +62,7 @@ void CAN_Router_Init(void)
             &temp_hfdcan,
             CAN_Rx_Config_Table[i].id,
             CAN_Rx_Config_Table[i].device_ptr,
-            (BSP_CAN_Callback_t)CAN_Rx_Config_Table[i].resolve
+            CAN_Rx_Config_Table[i].resolve
         );
     }
 }
@@ -73,46 +72,14 @@ void UART_Router_Init(void)
     size_t table_size = sizeof(UART_Rx_Config_Table) / sizeof(UART_Rx_Route_t);
     for (size_t i = 0; i < table_size; i++)
     {
-        UART_ReceiveToIdle_DMA(UART_Rx_Config_Table[i].huart,
-                               UART_Rx_Config_Table[i].rx_buf0,
-                               UART_Rx_Config_Table[i].dma_rx_size);
-    }
-}
-
-void UART_App_Rx_Dispatch(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
-{
-    size_t table_size = sizeof(UART_Rx_Config_Table) / sizeof(UART_Rx_Route_t);
-    for (size_t i = 0; i < table_size; i++)
-    {
-        if (huart == UART_Rx_Config_Table[i].huart)
-        {
-            uint8_t *next_buf = UART_Rx_Config_Table[i].rx_buf0;
-            if (UART_Rx_Config_Table[i].rx_buf1 != NULL) {
-                next_buf = (pData == UART_Rx_Config_Table[i].rx_buf0) ?
-                           UART_Rx_Config_Table[i].rx_buf1 :
-                           UART_Rx_Config_Table[i].rx_buf0;
-            }
-            UART_ReceiveToIdle_DMA(huart, next_buf, UART_Rx_Config_Table[i].dma_rx_size);
-            if (UART_Rx_Config_Table[i].expected_size != 0 && Size != UART_Rx_Config_Table[i].expected_size) {
-                return;
-            }
-            if (UART_Rx_Config_Table[i].resolve != NULL) {
-                UART_Rx_Config_Table[i].resolve(pData, UART_Rx_Config_Table[i].device_ptr, Size);
-            }
-            return;
-        }
-    }
-}
-
-void UART_App_Error_Dispatch(UART_HandleTypeDef *huart)
-{
-    size_t table_size = sizeof(UART_Rx_Config_Table) / sizeof(UART_Rx_Route_t);
-    for (size_t i = 0; i < table_size; i++)
-    {
-        if (huart == UART_Rx_Config_Table[i].huart)
-        {
-            UART_ReceiveToIdle_DMA(huart, UART_Rx_Config_Table[i].rx_buf0, UART_Rx_Config_Table[i].dma_rx_size);
-            return;
-        }
+        BSP_UART_Register_Slot(
+            UART_Rx_Config_Table[i].huart,
+            UART_Rx_Config_Table[i].expected_size,
+            UART_Rx_Config_Table[i].rx_buf0,
+            UART_Rx_Config_Table[i].rx_buf1,
+            UART_Rx_Config_Table[i].dma_rx_size,
+            UART_Rx_Config_Table[i].device_ptr,
+            UART_Rx_Config_Table[i].resolve
+        );
     }
 }

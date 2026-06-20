@@ -9,6 +9,8 @@
 #include <math.h>
 
 #include "BMI088driver.h"
+#include "Message_Center.h"
+#include "System_State.h"
 #include "VQF_filter.h"
 #include "WS2812.h"
 
@@ -43,7 +45,7 @@ static uint32_t temp_stable_tick = 0;// 温度稳定计时起点
 static uint16_t imu_pid_cnt      = 0;//PID控制计数器，用于10ms分频执行PID计算
 static uint16_t gyro_calib_cnt   = 0;//陀螺仪校准计数
 static float heater_pwm_out   = 0;// 当前加热片PWM输出值
-
+static Publisher_t* imu_pub = NULL;
 /**
  * @brief 设置加热片PWM输出
  * @param pwm 目标PWM值 (0.0f - HEATER_PWM_MAX)
@@ -95,6 +97,7 @@ void IMU_Temp_Control_Init(void)
 void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
 {
     float now_temp = IMU->temp;
+    BMI088_read(IMU->gyro, IMU->accel, &IMU->temp);
     IMU_Status_Check(IMU);// 监测IMU数据，若不正常则进入错误状态
     if (imu_ctrl_state != TEMP_INIT)
     {
@@ -124,6 +127,7 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
         case TEMP_INIT:
             IMU_Temp_Control_Init();
             vqf_init(&vqf_filter,0.001f);
+            System_State_Report(ID_IMU,STATUS_INIT);
 #ifdef DEBUG_MODE
             imu_ctrl_state = TEMP_PID_CTRL;
 #endif
@@ -133,6 +137,7 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
             break;
 
         case TEMP_PID_CTRL:
+            System_State_Report(ID_IMU,STATUS_PREPARING);
             if (fabsf(now_temp - IMU_TARGET_TEMP) < TEMP_STABLE_ERR)
             {
                 imu_ctrl_flag.temp_reached = 1;
@@ -157,6 +162,7 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
             break;
 
         case GYRO_CALIB:
+            System_State_Report(ID_IMU,STATUS_PREPARING);
             IMU_Gyro_Zero_Calibration_Task(IMU);
             if (imu_ctrl_flag.gyro_calib_done)
             {
@@ -172,6 +178,7 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
             break;
 
         case FUSION_RUN:
+            System_State_Report(ID_IMU,STATUS_RUN);
             WS2812_SetPixel(0, 20, 110, 90);
             const float AXIS_MAP[3][3] = {
                 {0.0f, 1.0f, 0.0f}, // Logical X = + Physical X
@@ -207,9 +214,14 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
             IMU->yaw = vqf_filter.yaw;
             IMU->YawTotalAngle = vqf_filter.YawTotalAngle;
 
+            if (imu_pub == NULL) {
+                imu_pub = PubRegister("imu_data", IMU, sizeof(IMU));
+            }
+            PubPushMessage(imu_pub, IMU);
             imu_ctrl_flag.fusion_enabled = 1;
             break;
         case ERROR_STATE:
+            System_State_Report(ID_IMU,STATUS_ERROR);
             WS2812_SetPixel(0, 255, 0, 0);// 红色表示错误
             if (BMI088_init() == 1) // 尝试重新初始化IMU，成功则认为错误已恢复
             {

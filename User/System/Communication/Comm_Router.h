@@ -37,8 +37,6 @@ typedef struct {
 // 函数声明
 void CAN_Router_Init(void);
 void UART_Router_Init(void);
-void UART_App_Rx_Dispatch(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size);
-void UART_App_Error_Dispatch(UART_HandleTypeDef *huart);
 
 void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 
