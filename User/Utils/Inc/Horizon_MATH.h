@@ -10,6 +10,7 @@
 int16_t MATH_ABS_int16_t(int16_t DATA);
 int32_t MATH_ABS_int32_t(int32_t DATA);
 int64_t MATH_ABS_int64_t(int64_t DATA);
+
 float MATH_ABS_float(float DATA);
 float Bytes_To_Float(const uint8_t *data);
 void Float_To_Bytes(float f, uint8_t *data);
