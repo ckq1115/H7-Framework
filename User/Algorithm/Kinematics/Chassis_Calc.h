@@ -5,7 +5,6 @@
 #ifndef G4_FRAMEWORK_CHASSIS_CALC_H
 #define G4_FRAMEWORK_CHASSIS_CALC_H
 #include <stdint.h>
-#include "All_Motor.h"
 
 typedef struct
 {
@@ -111,5 +110,7 @@ void Swerve_Inverse_Calc(Swerve_Command_t *cmd, Swerve_State_t *state,
                          float ax, float ay, float aw,
                          float vx, float vy, float vw,
                          const Swerve_Feedback_t *fb, const Swerve_Cfg_t *cfg);
+
+float CHASSIS_GET_MAX_TARGET(float MAX_POWER);
 
 #endif //G4_FRAMEWORK_CHASSIS_CALC_H
