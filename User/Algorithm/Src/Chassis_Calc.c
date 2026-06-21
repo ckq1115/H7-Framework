@@ -5,7 +5,7 @@
 #include <math.h>
 #include "All_define.h"
 #include "Horizon_MATH.h"
-
+float theta_chassis;
 static float ClampFloat(float val, float min_val, float max_val)
 {
     if (val < min_val) return min_val;
@@ -17,7 +17,7 @@ static float AbsFloat(float val)
 {
     return (val < 0.0f) ? -val : val;
 }
-
+//缓启动
 
 
 uint8_t MecanumInit(mecanumInit_typdef *mecanumInitT)
@@ -52,12 +52,42 @@ uint8_t MecanumInit(mecanumInit_typdef *mecanumInitT)
 
     return 0;
 }
-
+//带缓启动
 void MecanumResolve(float *wheel_rpm, float vx_temp, float vy_temp, float vr, mecanumInit_typdef *mecanumInit_t)
 {
+    static float SLOW_START = 0.0f;
+    float MAX_POWER;
+//待修改
+    // if(DBUS->KeyBoard.V_PreeNumber && (CAP_DATA->GET.capVolt  > 180.0f || Root->Power == RUI_DF_OFFLINE))
+    // {   //V键开电容,写死最大功率
+    //     MAX_POWER = 250.0f;
+    // }
+    // else
+    // {   //正常模式,读取最大功率
+    //     MAX_POWER = (User_data->robot_status.chassis_power_limit != 0) ? (float)User_data->robot_status.chassis_power_limit : 45.0f;
+    // }
+
     float vx = ClampFloat(vx_temp, -mecanumInit_t->max_vx_speed, mecanumInit_t->max_vx_speed);
     float vy = ClampFloat(vy_temp, -mecanumInit_t->max_vy_speed, mecanumInit_t->max_vy_speed);
     float vw = ClampFloat(vr, -mecanumInit_t->max_vw_speed, mecanumInit_t->max_vw_speed);
+    /*缓启动*/
+    if(vx != 0 || vy != 0 || vw != 0)
+    {
+        SLOW_START += 0.002f;//0.002f;
+        float SLOW_START_MAX = CHASSIS_GET_MAX_TARGET(MAX_POWER);
+        if(SLOW_START > SLOW_START_MAX)
+        {
+            SLOW_START = SLOW_START_MAX;
+        }
+        vx *= ( 1 - MATH_Limit_float(3000, 0, MATH_ABS_float(theta_chassis)) / 3000.0f );
+        vy *= ( 1 - MATH_Limit_float(3000, 0, MATH_ABS_float(theta_chassis)) / 3000.0f );
+
+
+        vx *= SLOW_START;
+        vy *= SLOW_START;
+        vw *= SLOW_START;
+
+    }
 
     wheel_rpm[0] = (-vx + vy + vw * mecanumInit_t->raid_fr) * mecanumInit_t->wheel_rpm_ratio;
     wheel_rpm[1] = ( vx + vy + vw * mecanumInit_t->raid_fl) * mecanumInit_t->wheel_rpm_ratio;
@@ -169,7 +199,7 @@ void Swerve_Forward_Calc(Swerve_State_t *now, MOTOR_Typdef *motor, float gyro_vw
             (motor->DJI_3508_Chassis[i].DATA.Speed_now * RPM_TO_RADS / cfg->gear_d)
             * cfg->r;
 
-        float theta_chassis = (motor->DJI_6020_Steer[i].DATA.Angle_now * ENCODER_TO_RAD) - cfg->Swerve_offset[i];
+        theta_chassis = (motor->DJI_6020_Steer[i].DATA.Angle_now * ENCODER_TO_RAD) - cfg->Swerve_offset[i];
         now->wheel[i].theta_now = normalize_to_pi(theta_chassis);
 
         float vix = now->wheel[i].v_wheel_now * cosf(theta_chassis);
@@ -231,5 +261,55 @@ void Swerve_Inverse_Calc(float *ff_out, MOTOR_Typdef *motor,
         float F_drive = F_ix * cosf(current_theta_chassis) + F_iy * sinf(current_theta_chassis);
         state->wheel[i].ff_out = speed_dir * (F_drive * cfg->r) * M3508_NM_TO_RAW * cfg->drive_dir[i];
         ff_out[i] = state->wheel[i].ff_out;
+    }
+}
+
+/************************************************************万能分隔符**************************************************************
+ * 	@author:			//瑞
+ *	@performance:	    //
+ *	@parameter:		    //
+ *	@time:				//24-5-8 上午9:44
+ *	@ReadMe:			//获取最大目标值
+ ************************************************************万能分隔符**************************************************************/
+float CHASSIS_GET_MAX_TARGET(float MAX_POWER)
+{
+    // 200w 0.04f
+    // 100w 0.065f
+    //  90w 0.065f
+    //  80w 0.07f
+    //  75w 0.08f
+    //  70w 0.09f
+    //  65w 0.1f
+    //  60w 0.08f
+    //  55w 0.06f
+    //  50w 0.04f
+    //  45w 0.02f
+    if (MAX_POWER == 45)
+    {
+        return 0.03f * MAX_POWER;
+    } else if (MAX_POWER == 50 || MAX_POWER == 200)
+    {
+        return 0.04f * MAX_POWER;
+    } else if (MAX_POWER == 55)
+    {
+        return 0.06f * MAX_POWER;
+    } else if (MAX_POWER == 60 || MAX_POWER == 75)
+    {
+        return 0.08f * MAX_POWER;
+    } else if (MAX_POWER == 65)
+    {
+        return 0.1f * MAX_POWER;
+    } else if (MAX_POWER == 70)
+    {
+        return 0.09f * MAX_POWER;
+    } else if (MAX_POWER == 80)
+    {
+        return 0.07f * MAX_POWER;
+    } else if (MAX_POWER == 90 || MAX_POWER == 100)
+    {
+        return 0.065f * MAX_POWER;
+    } else
+    {
+        return 0.1f * MAX_POWER;
     }
 }

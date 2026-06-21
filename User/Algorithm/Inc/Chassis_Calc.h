@@ -108,5 +108,6 @@ void Swerve_Forward_Calc(Swerve_State_t *now, MOTOR_Typdef *motor, float gyro_vw
 void Swerve_Inverse_Calc(float *ff_out, MOTOR_Typdef *motor,
                         float ax, float ay, float aw,
                         float vx, float vy, float vw, Swerve_Cfg_t *cfg, Swerve_State_t *state);
+float CHASSIS_GET_MAX_TARGET(float MAX_POWER);
 
 #endif //G4_FRAMEWORK_CHASSIS_CALC_H
