@@ -8,6 +8,7 @@
 
 #include "VT13.h"
 #include "Horizon_MATH.h"
+#include "stm32h7xx_hal.h"
 
 static uint16_t get_crc16_check_sum(uint8_t *p_msg, uint16_t len, uint16_t crc16);
 static bool verify_crc16_check_sum(uint8_t *p_msg, uint16_t len);
@@ -19,9 +20,11 @@ static void VT_HandleKeyToggle(uint8_t is_pressed, uint8_t *lock_flag, uint8_t *
 /**
  * @brief VT13 协议解析函数
  */
-void VT13_Resolved(uint8_t* Data, VT13_Typedef* VT13)
+void VT13_Resolved(uint8_t* Data, void *device_ptr, uint16_t size)
 {
+    VT13_Typedef *VT13 = device_ptr;
     VT13_FrameTypeDef* frame = (VT13_FrameTypeDef*)Data;
+    VT13->offline.last_feed_tick = HAL_GetTick();
     // 校验帧头 0xA9, 0x53 及整个数据帧的 CRC16
     if (frame->header1 == 0XA9 && frame->header2 == 0X53 && verify_crc16_check_sum(Data, 21))
     {

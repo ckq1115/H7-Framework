@@ -9,8 +9,9 @@
  * @brief DJI 电机协议解析内核 (3508/2006/6020 通用)
  */
 void DJI_Motor_Resolve(void* instance, uint8_t* rx_data) {
-    DJI_MOTOR_DATA_Typedef* DATA = &((DJI_MOTOR_Typedef*)instance)->DATA;
+    DJI_MOTOR_DATA_Typedef* DATA = instance;
 
+    DATA->offline.last_feed_tick = HAL_GetTick();
     DATA->Angle_last = DATA->Angle_now;
     DATA->Angle_now  = (int16_t)((rx_data[0] << 8) | rx_data[1]);
     DATA->Speed_last = DATA->Speed_now;
@@ -29,7 +30,6 @@ void DJI_Motor_Resolve(void* instance, uint8_t* rx_data) {
         DATA->Laps = 0;
     }
 
-    DATA->ONLINE_JUDGE_TIME = MOTOR_OFFLINE_TIME;
     DATA->Angle_Infinite = (int32_t)((DATA->Laps << 13) + DATA->Angle_now);
 }
 
@@ -47,7 +47,6 @@ void DJI_Motor_Send(FDCAN_HandleTypeDef* hcan, uint32_t stdid, int16_t n1, int16
         FDCAN_Send_Msg(hcan, stdid, data, 8);
     }
 }
-
 
 void DJI_Motor_Clear(DJI_MOTOR_Typedef* motor) {
     motor->PID_S.Output = 0.0;
@@ -83,10 +82,8 @@ void DJI_Motor_Stuck_Check(DJI_MOTOR_Typedef* motor, float current_limit, float 
             // 【触发保护】
             motor->DATA.Stuck_Time = 0;
             motor->DATA.Stuck_Flag[0]++;
-
             // 进入锁定恢复模式
             motor->DATA.Recovery_Count = recovery_limit;
-
             //DJI_Motor_Clear(motor);
             motor->DATA.Stuck_Flag[1] = 1;
             // 报警提示

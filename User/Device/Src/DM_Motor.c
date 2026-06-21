@@ -8,60 +8,66 @@
  * @brief 达妙电机数据解析函数
  * @param motor   电机结构体指针
  * @param rx_data 接收到的8字节数据数组
- * @note 该函数根据达妙电机的通信协议，将接收到的字节数据解析为电机的物理量，并更新电机状态
+ * @note
  */
-void DM_Standard_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data)
+void DM_Standard_Resolve(void* instance, uint8_t *rx_data)
 {
-    motor->DATA.id = (rx_data[0]) & 0x0F;
-    motor->DATA.state = (rx_data[0]) >> 4;
-    motor->DATA.p_int = (rx_data[1] << 8) | rx_data[2];
-    motor->DATA.v_int = (rx_data[3] << 4) | (rx_data[4] >> 4);
-    motor->DATA.t_int = ((rx_data[4] & 0xF) << 8) | rx_data[5];
+    if (instance == NULL || rx_data == NULL) return;
+
+    DM_MOTOR_DATA_Typdef* DATA = instance;
+
+    DATA->id = (rx_data[0]) & 0x0F;
+    DATA->state = (rx_data[0]) >> 4;
+    DATA->p_int = (rx_data[1] << 8) | rx_data[2];
+    DATA->v_int = (rx_data[3] << 4) | (rx_data[4] >> 4);
+    DATA->t_int = ((rx_data[4] & 0xF) << 8) | rx_data[5];
 
     // 映射到物理量
-    motor->DATA.pos = uint_to_float(motor->DATA.p_int, P_MIN, P_MAX, 16);
-    motor->DATA.vel = uint_to_float(motor->DATA.v_int, V_MIN, V_MAX, 12);
-    motor->DATA.tor = uint_to_float(motor->DATA.t_int, T_MIN, T_MAX, 12);
+    DATA->pos = uint_to_float(DATA->p_int, P_MIN, P_MAX, 16);
+    DATA->vel = uint_to_float(DATA->v_int, V_MIN, V_MAX, 12);
+    DATA->tor = uint_to_float(DATA->t_int, T_MIN, T_MAX, 12);
 
-    motor->DATA.Tmos = (float)(rx_data[6]);
-    motor->DATA.Tcoil = (float)(rx_data[7]);
-    motor->DATA.ONLINE_JUDGE_TIME = MOTOR_OFFLINE_TIME;
+    DATA->Tmos = (float)(rx_data[6]);
+    DATA->Tcoil = (float)(rx_data[7]);
+    DATA->offline.last_feed_tick = HAL_GetTick();
 }
 
 /**
  * @brief 达妙电机一拖四模式数据解析函数
  * @param motor   电机结构体指针
  * @param rx_data 接收到的8字节数据数组
- * @note 该函数在标准解析的基础上，增加了多圈角度处理、速度滤波和离线计时等功能，以适应更复杂的应用场景
+ * @note
  */
-void DM_1to4_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data)
+void DM_1to4_Resolve(void* instance, uint8_t* rx_data)
 {
-    motor->DATA.Angle_last = motor->DATA.Angle_now;
-    motor->DATA.Angle_now = (rx_data[0] << 8) | rx_data[1];
+    if (instance == NULL || rx_data == NULL) return;
 
-    int16_t spd_raw = (rx_data[2] << 8) | rx_data[3];
-    int16_t cur_raw = (rx_data[4] << 8) | rx_data[5];
+    DM_MOTOR_DATA_Typdef* DATA = instance;
 
-    // 多圈逻辑与零位偏移
-    int16_t angleError = motor->DATA.Angle_now - INIT_ANGLE;
-    if (angleError > 4096) angleError -= 8192;
+    DATA->Angle_last = DATA->Angle_now;
+    DATA->Angle_now = (int16_t)((rx_data[0] << 8) | rx_data[1]);
+
+    int16_t spd_raw = (int16_t)((rx_data[2] << 8) | rx_data[3]);
+    int16_t cur_raw = (int16_t)((rx_data[4] << 8) | rx_data[5]);
+
+    int16_t angleError = DATA->Angle_now - INIT_ANGLE;
+    if (angleError > 4096)       angleError -= 8192;
     else if (angleError < -4096) angleError += 8192;
 
-    motor->DATA.ralativeAngle = angleError * 0.043945f; // 360/8192
+    DATA->ralativeAngle = angleError * 0.043945f; // 360.0f / 8192.0f
 
-    // 圈数统计
-    if ((motor->DATA.Angle_now - motor->DATA.Angle_last) < -4096) motor->DATA.round++;
-    else if ((motor->DATA.Angle_now - motor->DATA.Angle_last) > 4096) motor->DATA.round--;
+    int16_t diff = DATA->Angle_now - DATA->Angle_last;
+    if      (diff < -4096) DATA->Laps++;
+    else if (diff >  4096) DATA->Laps--;
 
-    // 速度滤波
-    motor->DATA.Speed_last = motor->DATA.Speed_now;
-    motor->DATA.Speed_now = OneFilter1(spd_raw / 100, motor->DATA.Speed_last, 500);
+    DATA->Speed_last = DATA->Speed_now;
+    DATA->Speed_now  = OneFilter1(spd_raw / 100, DATA->Speed_last, 500);
+    DATA->current = (float)cur_raw;
+    DATA->Tcoil   = (float)rx_data[6];
+    DATA->Tmos    = (float)rx_data[7];
 
-    motor->DATA.current = ((float)cur_raw);
-    motor->DATA.Tcoil = (float)(rx_data[6]);
-    motor->DATA.Tmos = (float)(rx_data[7]);
-    motor->DATA.Angle_Infinite = (int32_t)((motor->DATA.round * 8192) + motor->DATA.Angle_now);
-    motor->DATA.ONLINE_JUDGE_TIME = MOTOR_OFFLINE_TIME;
+    DATA->offline.last_feed_tick = HAL_GetTick();
+    DATA->Angle_Infinite    = (int32_t)((DATA->Laps * 8192) + DATA->Angle_now);
 }
 
 /**

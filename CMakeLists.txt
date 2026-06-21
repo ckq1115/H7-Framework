@@ -19,6 +19,7 @@ file(GLOB_RECURSE USER_SOURCES
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES}
+
 )
 
 # 自动递归包含头文件
@@ -52,7 +53,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
         -Werror=implicit-function-declaration -Werror=incompatible-pointer-types
         -fdata-sections -ffunction-sections
         $<$<CONFIG:Debug>:-Og -g3 -fno-omit-frame-pointer -fno-lto>
-        $<$<CONFIG:Release>:-O3 -ffast-math -funroll-loops>
+        $<$<CONFIG:Release>:-O3 -g3 -funroll-loops>
 )
 
 # 链接配置

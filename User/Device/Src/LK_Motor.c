@@ -2,14 +2,16 @@
 // Created by CaoKangqi on 2026/3/15.
 //
 #include "LK_Motor.h"
-#include "BSP-FDCAN.h"
+#include "BSP_FDCAN.h"
 
 /**
  * @brief LK 电机协议解析
  */
 void LK_Motor_Resolve(void *instance, uint8_t *RxMessage)
 {
-    LK_MOTOR_DATA_Typedef *DATA = &((LK_MOTOR_Typedef *)instance)->DATA;
+    LK_MOTOR_DATA_Typedef *DATA = instance;
+
+    DATA->offline.last_feed_tick = HAL_GetTick();
     DATA->temp = RxMessage[1];
     DATA->Current = ((uint16_t)RxMessage[3] << 8 | RxMessage[2]);
     DATA->lastRawSpeed = DATA->rawSpeed;

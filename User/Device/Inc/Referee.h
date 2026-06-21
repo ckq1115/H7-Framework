@@ -5,6 +5,7 @@
 #include "string.h"
 #include "stdint.h"
 #include "CRC_DJI.h"
+#include "Offline_Detector.h"
 
 /* 帧长度 */
 #define REFEREE_RXFRAME_LENGTH 256
@@ -428,7 +429,7 @@ typedef struct __packed
 
 typedef struct __packed
 {
-    int8_t ONLINE_JUDGE_TIME;
+    Offline_Check_t offline;
     game_status_t game_status;                           /* 内部包含：0x0001 比赛状态数据段 */
     game_result_t game_result;                           /* 内部包含：0x0002 比赛结果数据段 */
     game_robot_HP_t game_robot_HP;                       /* 内部包含：0x0003 所有机器人实时血量数据段 */
@@ -486,7 +487,7 @@ typedef union
 extern uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
 extern User_Data_T User_data;
 
-void Referee_System_Frame_Update(uint8_t *Buff, uint16_t Size);
+void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size);
 
 void Referee_Send_KeyMouse(custom_client_data_t *control_data);
 

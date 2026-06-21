@@ -14,7 +14,7 @@
 #include "All_define.h"
 #include "All_Motor.h"
 #include "cmsis_os2.h"
-#include "BSP-FDCAN.h"
+#include "BSP_FDCAN.h"
 #include "BSP_DWT.h"
 #include "DBUS.h"
 #include "DJI_Motor.h"
@@ -25,7 +25,14 @@
 #include "BMI088driver.h"
 #include "mahony_filter.h"
 #include "IMU_Task.h"
-
+#include "Power_CAP.h"
+#include "VQF_filter.h"
+#include "Power_Ctrl.h"
+#include "Interrupt.h"
+#include "usb_device.h"
+#include "mahony_filter.h"
+#include "QuaternionEKF.h"
+#include "Offline_Detector.h"
 extern uint8_t DBUS_RX_DATA[18];
 extern DBUS_Typedef DBUS;
 

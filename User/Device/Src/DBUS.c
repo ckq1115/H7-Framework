@@ -9,6 +9,7 @@
 #include "DBUS.h"
 #include "All_define.h"
 #include "Horizon_MATH.h"
+#include "stm32h7xx_hal.h"
 
 static float DBUS_OneFilter(float last, float now, float thresholdValue);
 static uint8_t DBUS_UpdateKeyStatus(uint8_t is_pressed, uint8_t *press_time);
@@ -17,10 +18,11 @@ static void DBUS_HandleKeyToggle(uint8_t is_pressed, uint8_t *lock_flag, uint8_t
 /**
  * @brief DBUS 协议解析入口
  */
-void DBUS_Resolved(uint8_t* Data, DBUS_Typedef *DBUS)
+void DBUS_Resolved(uint8_t* Data, void *device_ptr,uint16_t size)
 {
+    DBUS_Typedef*DBUS = device_ptr;
     // 如果离线时间未作改动，在此更新在线生存时间
-    DBUS->ONLINE_JUDGE_TIME = DBUS_OFFLINE_TIME;
+    DBUS->offline.last_feed_tick = HAL_GetTick();
 
     // 将输入缓冲区映射到位域结构体
     DBUS_FrameTypeDef* frame = (DBUS_FrameTypeDef*)Data;

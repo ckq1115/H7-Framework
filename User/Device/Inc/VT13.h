@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "Offline_Detector.h"
+
 /**
  * @brief 按键状态枚举
  */
@@ -27,7 +29,7 @@ typedef enum {
  * @brief 应用层使用的解析结果结构体
  */
 typedef struct {
-    int8_t ONLINE_JUDGE_TIME;       /**< 裁判系统在线倒计时 */
+    Offline_Check_t offline;
     int8_t Ctrl_Mode;               /**< 控制模式（键鼠/遥控） */
     bool CRC_flag;                  /**< CRC校验通过标志位 */
 
@@ -172,7 +174,7 @@ typedef union {
  * @param Data 21字节原始数据输入缓冲区指针
  * @param VT13 解析结果目标结构体指针
  */
-void VT13_Resolved(uint8_t* Data, VT13_Typedef* VT13);
+void VT13_Resolved(uint8_t* Data, void *device_ptr, uint16_t size);
 
 /**
  * @brief CRC16 查找表

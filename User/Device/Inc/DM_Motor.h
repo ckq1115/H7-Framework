@@ -1,12 +1,14 @@
 //
 // Created by CaoKangqi on 2026/2/14.
 //
-#ifndef G4_FRAMEWORK_DM_MOTOR_H
-#define G4_FRAMEWORK_DM_MOTOR_H
+#ifndef H7_FRAMEWORK_DM_MOTOR_H
+#define H7_FRAMEWORK_DM_MOTOR_H
 
-#include "BSP-FDCAN.h"
+#include "BSP_FDCAN.h"
 #include "Horizon_MATH.h"
 #include "controller.h"
+#include "Offline_Detector.h"
+
 
 // --- 模式偏移地址 ---
 #define MIT_MODE      0x000
@@ -26,7 +28,7 @@
 #define T_MAX    10.0f
 
 typedef struct {
-    int8_t ONLINE_JUDGE_TIME;
+    Offline_Check_t offline;
     int id;
     int state;
     int p_int;
@@ -54,10 +56,7 @@ typedef struct {
     uint16_t Stuck_Flag[2];
     int16_t Laps;
     float dt;
-
-    uint16_t initialAngle;
     float ralativeAngle;
-    int16_t round;
 } DM_MOTOR_DATA_Typdef;
 
 typedef struct {
@@ -74,9 +73,9 @@ typedef enum {
     DM_CMD_CLEAR_ERROR   = 0xfb,//清除错误状态
 } DMMotor_Mode_e;
 
-// 模式解析
-void DM_Standard_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data);
-void DM_1to4_Resolve(DM_MOTOR_Typdef *motor, uint8_t *rx_data);
+// 反馈解算
+void DM_Standard_Resolve(void* instance, uint8_t *rx_data);
+void DM_1to4_Resolve(void* instance, uint8_t* rx_data);
 
 // 控制发送
 void Motor_Mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id, DMMotor_Mode_e what);

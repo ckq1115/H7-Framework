@@ -2,15 +2,17 @@
 // Created by CaoKangqi on 2026/3/15.
 //
 
-#ifndef G4_FRAMEWORK_LK_MOTOR_H
-#define G4_FRAMEWORK_LK_MOTOR_H
+#ifndef H7_FRAMEWORK_LK_MOTOR_H
+#define H7_FRAMEWORK_LK_MOTOR_H
 
 #include "controller.h"
 #include "fdcan.h"
+#include "Offline_Detector.h"
+
 
 typedef struct
 {
-    int8_t ONLINE_JUDGE_TIME;
+    Offline_Check_t offline;
     uint8_t  temp;          // 电机温度
     uint16_t Current;       // 电流
 
