@@ -62,7 +62,7 @@ void DM_1to4_Resolve(void* instance, uint8_t* rx_data)
 
     DATA->Speed_last = DATA->Speed_now;
     DATA->Speed_now  = OneFilter1(spd_raw / 100, DATA->Speed_last, 500);
-    DATA->current = (float)cur_raw;
+    DATA->current = cur_raw;
     DATA->Tcoil   = (float)rx_data[6];
     DATA->Tmos    = (float)rx_data[7];
 

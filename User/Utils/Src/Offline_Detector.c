@@ -10,22 +10,21 @@
 
 static const Offline_Route_t Offline_Config_Table[] = {
     /* ----- 底盘组 ----- */
-    {&All_Motor.DJI_3508_Chassis[0].DATA.offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&All_Motor.DJI_3508_Chassis[1].DATA.offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&All_Motor.DJI_3508_Chassis[2].DATA.offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&All_Motor.DJI_3508_Chassis[3].DATA.offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&All_Motor.DJI_6020_Steer[0].DATA.offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&All_Motor.DJI_6020_Steer[1].DATA.offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&All_Motor.DJI_6020_Steer[2].DATA.offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&All_Motor.DJI_6020_Steer[3].DATA.offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_3508_Chassis[0].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_3508_Chassis[1].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_3508_Chassis[2].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_3508_Chassis[3].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_6020_Steer[0].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_6020_Steer[1].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_6020_Steer[2].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_6020_Steer[3].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
 
     /* ----- 云台组 ----- */
-    {&All_Motor.DJI_6020_Pitch.DATA.offline,       MOTOR_OFFLINE_TIME,  GIMBAL},
-    {&All_Motor.DJI_3508_Yaw.DATA.offline,         MOTOR_OFFLINE_TIME,  GIMBAL},
+    {&gimbal_motors.DJI_3508_Yaw.offline,         MOTOR_OFFLINE_TIME,  GIMBAL},
 
     /* ----- 发射组 ----- */
-    {&All_Motor.DM4310_Feed.DATA.offline,          MOTOR_OFFLINE_TIME,  SHOOT},
-    {&All_Motor.DJI_3508_Pull.DATA.offline,        MOTOR_OFFLINE_TIME,  SHOOT},
+    {&shoot_motors.DM4310_Feed.offline,          MOTOR_OFFLINE_TIME,  SHOOT},
+    {&shoot_motors.DJI_3508_Pull.offline,        MOTOR_OFFLINE_TIME,  SHOOT},
 
     /* ----- 其他系统 ----- */
     {&DBUS.offline,                                DBUS_OFFLINE_TIME,   GROUP_NONE},

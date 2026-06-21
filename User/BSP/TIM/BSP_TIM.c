@@ -68,6 +68,29 @@ void TIM_Set_Autoreload(PWM_Device_e device, uint32_t autoreload)
 }
 
 /**
+ * @brief 改变指定定时器的周期/频率(ARR)和占空比(CCR)，并使之立即生效（解决变调拖音破音问题）
+ */
+void TIM_Set_Autoreload_Immediate(PWM_Device_e device, uint32_t autoreload, uint32_t compare)
+{
+    if (device >= PWM_DEVICE_CNT) return;
+    TIM_HandleTypeDef *htim = PWM_Hardware_Table[device].htim;
+    if (htim == NULL) return;
+
+    // 1. 先把比较值拉低，短暂关闭输出，防止修改 ARR 期间产生极高频杂音
+    __HAL_TIM_SET_COMPARE(htim, PWM_Hardware_Table[device].channel, 0);
+
+    // 2. 写入新的 ARR 和 CCR
+    __HAL_TIM_SET_AUTORELOAD(htim, autoreload);
+    __HAL_TIM_SET_COMPARE(htim, PWM_Hardware_Table[device].channel, compare);
+
+    // 3. 关键：将当前计数器清零，强制让定时器从头计数，完美避开 Preload 的等待期
+    __HAL_TIM_SET_COUNTER(htim, 0);
+
+    // 4. 软件产生更新事件，把 shadow 寄存器的值立刻刷入 active 寄存器
+    htim->Instance->EGR = TIM_EGR_UG;
+}
+
+/**
  * @brief 强符号重写：HAL 库脉冲半传输完成全局中断入口
  */
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim)

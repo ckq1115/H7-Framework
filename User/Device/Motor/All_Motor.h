@@ -9,29 +9,32 @@
 #include "DM_Motor.h"
 #include "LK_Motor.h"
 
-typedef struct
-{
-    DJI_MOTOR_Typedef DJI_6020_Pitch;
-    DJI_MOTOR_Typedef DJI_6020_Yaw;
+typedef struct __attribute__((aligned(4))){
+    DJI_MOTOR_DATA_Typedef DJI_3508_Chassis[4];
+    DJI_MOTOR_DATA_Typedef DJI_6020_Steer[4];
+} Chassis_Motor_Group_t;
 
-    DJI_MOTOR_Typedef DJI_3508_Shoot_L;
-    DJI_MOTOR_Typedef DJI_3508_Shoot_R;
-    DJI_MOTOR_Typedef DJI_3508_Shoot_M;
+typedef struct __attribute__((aligned(4))){
+    DJI_MOTOR_DATA_Typedef DJI_3508_Yaw;
+    DM_MOTOR_DATA_Typedef DM4310_Pitch;
+    DM_MOTOR_DATA_Typedef DM4310_Yaw;
+} Gimbal_Motor_Group_t;
 
-    DJI_MOTOR_Typedef DJI_3508_Chassis[4];
-    DJI_MOTOR_Typedef DJI_6020_Steer[4];
+typedef struct __attribute__((aligned(4))){
+    DJI_MOTOR_DATA_Typedef DJI_3508_Shoot_L;
+    DJI_MOTOR_DATA_Typedef DJI_3508_Shoot_R;
+    DJI_MOTOR_DATA_Typedef DJI_3508_Shoot_M;
+    DM_MOTOR_DATA_Typedef DM4310_Feed;
+    DJI_MOTOR_DATA_Typedef DJI_3508_Pull;
+    DJI_MOTOR_DATA_Typedef DJI_3508_Travel;
+    DJI_MOTOR_DATA_Typedef DJI_2006_bo;
+} Shoot_Motor_Group_t;
 
-    DJI_MOTOR_Typedef DJI_3508_Pull;
-    DJI_MOTOR_Typedef DJI_3508_Travel;
-    DJI_MOTOR_Typedef DJI_3508_Yaw;
-    DJI_MOTOR_Typedef DJI_2006_bo;
+extern Chassis_Motor_Group_t chassis_motors;
+extern Gimbal_Motor_Group_t  gimbal_motors;
+extern Shoot_Motor_Group_t   shoot_motors;
 
-    DM_MOTOR_Typdef DM4310_Feed;
-    DM_MOTOR_Typdef DM4310_Pitch;
-    DM_MOTOR_Typdef DM4310_Yaw;
-    LK_MOTOR_Typedef LK9025_Yaw;
-}MOTOR_Typdef;
-
-extern MOTOR_Typdef All_Motor;
+uint8_t Motor_Stuck_Check(float current_feedback, float speed_feedback,
+                                 float energy_limit, float *p_stuck_energy);
 
 #endif //G4_FRAMEWORK_ALL_MOTOR_H

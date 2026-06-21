@@ -3,43 +3,45 @@
 
 #include <stdint.h>
 
-#include "All_Motor.h"
-#include "Power_CAP.h"
-#include "Referee.h"
-
-
 #define POWER_RPM_TO_RAD       (2.0f * 3.14159265f / 60.0f)
-#define CAP_MIN_CAPACITY       23.0f   // 电容电量下限
-#define CAP_THRESHOLD_CAPACITY 27.0f
-#define CAP_SUPER_POWER_MAX    150.0f  // 电容最大释放功率
-#define DEFAULT_POWER_LIMIT    50.0f   // 默认底盘功率限制
-#define MAX_BUFFER_ENERGY      60.0f   // 最大缓冲能量
 
-// 电机物理模型参数
+// 电机功率物理模型参数
 typedef struct {
     float k1, k2, k3, k4;
     float current_convert;
 } Power_Motor_Model_t;
 
-
-// 功率控制器主实例结构体
+// 输入的单电机状态
 typedef struct {
-    /* --- 参数区 --- */
-    float Kp;                  // 缓冲能量PI补偿的比例系数
-    float target_buffer;       // 期望维持的缓冲能量目标
+    float speed_rpm;       // 当前实时转速 (RPM)
+    float original_cmd;    // 原始输入的 PID 电流控制项
+    float limited_cmd;     // 缩放限制后的电流控制项
+} Motor_Power_State_t;
+
+// 功率控制器
+typedef struct {
+    float Kp;
+    float target_buffer;
     Power_Motor_Model_t m3508;
     Power_Motor_Model_t m6020;
 
-    /* --- 状态区 --- */
-    uint8_t cap_mode;          // 电容模式 (0:关闭, 1:开启)
-    uint8_t cap_is_open;       // 当前电容是否正在输出的标志位
-    float   basic_limit;       // 裁判系统基础限制 + 缓冲补偿
-    float   actual_limit;      // 最终用于模型解算的功率上限
-    float   total_pred_power;  // 解算后预测的总功率
-} Power_Ctrl_Instance_t;
+    float total_pred_power;   // 解算后预测的总功率
+} Power_Ctrl_t;
 
-// --- 外部接口 ---
-void Power_Ctrl_Init(Power_Ctrl_Instance_t *ctrl);
-uint8_t Power_Ctrl_Execute(Power_Ctrl_Instance_t *ctrl, User_Data_T *referee, Cap_t *cap, MOTOR_Typdef *motors);
+void Power_Ctrl_Init(Power_Ctrl_t *ctrl);
+
+/**
+ * @brief 核心控制算法（纯数学解算）
+ * @param ctrl          算法实例
+ * @param allowed_limit 当前解算允许的最大绝对功率 (瓦特 W)
+ * @param cur_buffer    当前的裁判系统缓冲能量 (焦耳 J)
+ * @param m3508_group   底盘3508电机的速度与输入电流集合 (4个)
+ * @param m6020_group   底盘6020舵电机的速度与输入电流集合 (4个)
+ */
+void Power_Ctrl_Calculate(Power_Ctrl_t *ctrl,
+                           float allowed_limit,
+                           float cur_buffer,
+                           Motor_Power_State_t m3508_group[4],
+                           Motor_Power_State_t m6020_group[4]);
 
 #endif // G4_FRAMEWORK_POWER_CTRL_H

@@ -88,24 +88,28 @@ typedef struct {
 extern Swerve_Cfg_t S_Cfg;
 extern Swerve_State_t S_Now;
 
+// 反馈数据，输入给解算器
+typedef struct {
+    float steer_angle_rad[4];  // 舵轮当前连续绝对角度 (rad)
+    float steer_rpm[4];
+    float wheel_rpm[4];        // 驱动轮当前转速 (RPM)
+    float gyro_vw;             // 底盘当前实际角速度 (rad/s)
+} Swerve_Feedback_t;
+
+// 解算器输出的指令数据
+typedef struct {
+    float target_steer_angle_rad[4]; // 目标舵向角 (rad)
+    float target_wheel_rpm[4];       // 目标驱动轮转速 (RPM)
+    float ff_torque_raw[4];          // 前馈控制量 (无量纲原始值或力矩)
+} Swerve_Command_t;
+
 uint8_t Swerve_Init(Swerve_Cfg_t *cfg, Swerve_State_t *state);
 
-/**
- * @brief 舵轮正解算 (Forward Kinematics)
- * @param now 输出物理状态
- * @param motor 输入电机结构体指针
- * @param gyro_vw IMU角速度反馈
- */
-void Swerve_Forward_Calc(Swerve_State_t *now, MOTOR_Typdef *motor, float gyro_vw, Swerve_Cfg_t *cfg);
+void Swerve_Forward_Calc(Swerve_State_t *now, const Swerve_Feedback_t *fb, const Swerve_Cfg_t *cfg);
 
-/**
- * @brief 舵轮力控逆解算 (Inverse Kinematics with Feedforward)
- * @param motor 输出目标到电机结构体
- * @param ax/ay/aw 输入目标加速度 (由外环PID产生)
- * @param vx/vy/vw 输入目标速度
- */
-void Swerve_Inverse_Calc(float *ff_out, MOTOR_Typdef *motor,
-                        float ax, float ay, float aw,
-                        float vx, float vy, float vw, Swerve_Cfg_t *cfg, Swerve_State_t *state);
+void Swerve_Inverse_Calc(Swerve_Command_t *cmd, Swerve_State_t *state,
+                         float ax, float ay, float aw,
+                         float vx, float vy, float vw,
+                         const Swerve_Feedback_t *fb, const Swerve_Cfg_t *cfg);
 
 #endif //G4_FRAMEWORK_CHASSIS_CALC_H

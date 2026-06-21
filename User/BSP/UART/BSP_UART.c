@@ -109,7 +109,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 }
 
 /**
- * @brief HAL库串口错误回调函数 (由 BSP 统一自动重启，防止死机)
+ * @brief HAL库串口错误回调函数
  */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {

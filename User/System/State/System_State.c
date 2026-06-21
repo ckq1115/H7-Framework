@@ -3,8 +3,11 @@
 //
 
 #include "System_State.h"
+
+#include "Buzzer.h"
 #include "DBUS.h"
 #include "Referee.h"
+#include "WS2812.h"
 
 System_State_t sys_state;
 
@@ -20,8 +23,8 @@ void System_State_Init(void) {
     sys_state.global_mode = GLOBAL_SAFE_LOCK;
 
     // 错误及限制初始化
-    sys_state.error.all_code = 0;
     sys_state.power_limit = 45.0f;
+    WS2812_SetMode_Breathing(0,0,0,200,3);
 }
 
 void System_State_Report(Module_ID_e module_id, App_Status_e status) {
@@ -57,6 +60,36 @@ void System_State_Update(Offline_Check_t *remote_offline) {
         sys_state.error.bit.gimbal_offline)
     {
         sys_state.global_mode = GLOBAL_SAFE_LOCK;
-        return;
     }
+    System_Remote_Buzzer_Feedback();
+}
+
+
+void System_Remote_Buzzer_Feedback(void)
+{
+    static uint8_t last_remote_lost = 1; // 记录上一次的遥控器在线状态
+    static uint32_t last_alarm_time = 0; // 记录上一次触发警报的时间戳
+
+    uint32_t current_time = HAL_GetTick(); // 获取当前系统毫秒时间戳
+    uint8_t current_remote_lost = sys_state.error.bit.remote_lost; // 状态检测
+
+    if (current_remote_lost == 0)
+    {
+        if (last_remote_lost == 1)
+        {
+            Buzzer_Trigger_Status(BUZZER_STATUS_CLICK_HINT);
+            WS2812_SetMode_Breathing(0,0,150,0,3);
+        }
+        last_alarm_time = 0;
+    }
+    else
+    {
+        if (current_time - last_alarm_time >= 1200)
+        {
+            Buzzer_Trigger_Status(BUZZER_STATUS_WARN_DISCONNECT);
+            WS2812_SetMode_Breathing(0,200,75,0,0.5f);
+            last_alarm_time = current_time;
+        }
+    }
+    last_remote_lost = current_remote_lost;
 }

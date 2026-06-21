@@ -3,6 +3,7 @@
 #include "Comm_Router.h"
 #include "All_Motor.h"
 #include "BSP_UART.h"
+#include "Buzzer.h"
 #include "DBUS.h"
 #include "IMU_Task.h"
 #include "Power_CAP.h"
@@ -14,22 +15,21 @@
 static const CAN_Rx_Route_t CAN_Rx_Config_Table[] = {
     /* ----- FDCAN1 ----- */
     //           总线        ID             目标结构体指针                          解析函数
-    {FDCAN1, 0x201, &All_Motor.DJI_3508_Chassis[0].DATA, DJI_Motor_Resolve},
-    {FDCAN1, 0x202, &All_Motor.DJI_3508_Chassis[1].DATA, DJI_Motor_Resolve},
-    {FDCAN1, 0x203, &All_Motor.DJI_3508_Chassis[2].DATA, DJI_Motor_Resolve},
-    {FDCAN1, 0x204, &All_Motor.DJI_3508_Chassis[3].DATA, DJI_Motor_Resolve},
-    {FDCAN1, 0x206, &All_Motor.DJI_6020_Pitch.DATA,      DJI_Motor_Resolve},
+    {FDCAN1, 0x201, &chassis_motors.DJI_3508_Chassis[0], DJI_Motor_Resolve},
+    {FDCAN1, 0x202, &chassis_motors.DJI_3508_Chassis[1], DJI_Motor_Resolve},
+    {FDCAN1, 0x203, &chassis_motors.DJI_3508_Chassis[2], DJI_Motor_Resolve},
+    {FDCAN1, 0x204, &chassis_motors.DJI_3508_Chassis[3], DJI_Motor_Resolve},
 
     /* ----- FDCAN2 ----- */
-    {FDCAN2, 0x205, &All_Motor.DJI_6020_Steer[0].DATA,   DJI_Motor_Resolve},
-    {FDCAN2, 0x206, &All_Motor.DJI_6020_Steer[1].DATA,   DJI_Motor_Resolve},
-    {FDCAN2, 0x207, &All_Motor.DJI_6020_Steer[2].DATA,   DJI_Motor_Resolve},
-    {FDCAN2, 0x208, &All_Motor.DJI_6020_Steer[3].DATA,   DJI_Motor_Resolve},
+    {FDCAN2, 0x205, &chassis_motors.DJI_6020_Steer[0],   DJI_Motor_Resolve},
+    {FDCAN2, 0x206, &chassis_motors.DJI_6020_Steer[1],   DJI_Motor_Resolve},
+    {FDCAN2, 0x207, &chassis_motors.DJI_6020_Steer[2],   DJI_Motor_Resolve},
+    {FDCAN2, 0x208, &chassis_motors.DJI_6020_Steer[3],   DJI_Motor_Resolve},
 
     /* ----- FDCAN3 ----- */
-    {FDCAN3, 0x301, &All_Motor.DM4310_Feed.DATA,         DM_1to4_Resolve},
-    {FDCAN3, 0x202, &All_Motor.DJI_3508_Pull.DATA,       DJI_Motor_Resolve},
-    {FDCAN3, 0x203, &All_Motor.DJI_3508_Yaw.DATA,        DJI_Motor_Resolve},
+    {FDCAN3, 0x301, &shoot_motors.DM4310_Feed,         DM_1to4_Resolve},
+    {FDCAN3, 0x202, &shoot_motors.DJI_3508_Pull,       DJI_Motor_Resolve},
+    {FDCAN3, 0x203, &gimbal_motors.DJI_3508_Yaw,        DJI_Motor_Resolve},
     {FDCAN3, 0x288, &cap.get,                            Power_Cap_Rx},
 };
 
@@ -42,8 +42,7 @@ static const UART_Rx_Route_t UART_Rx_Config_Table[] = {
 
 void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     if (htim->Instance == TIM4) {
-        WS2812_UpdateBreathing(0,3.0f);
-        WS2812_Send();
+        WS2812_Ticks_1ms();
         DWT_SysTimeUpdate();
         Offline_Monitor();
         System_State_Update(&DBUS.offline);

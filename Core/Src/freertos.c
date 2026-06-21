@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "All_Task.h"
+#include "Message_Center.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +55,13 @@ const osThreadAttr_t IMUTask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for MotorTask02 */
+osThreadId_t MotorTask02Handle;
+const osThreadAttr_t MotorTask02_attributes = {
+  .name = "MotorTask02",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -61,6 +69,7 @@ const osThreadAttr_t IMUTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void IMU_Task(void *argument);
+void Motor_Task(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -72,7 +81,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
+  Message_Center_Init();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -94,6 +103,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of IMUTask */
   IMUTaskHandle = osThreadNew(IMU_Task, NULL, &IMUTask_attributes);
+
+  /* creation of MotorTask02 */
+  MotorTask02Handle = osThreadNew(Motor_Task, NULL, &MotorTask02_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -123,6 +135,24 @@ __weak void IMU_Task(void *argument)
     osDelay(1);
   }
   /* USER CODE END IMU_Task */
+}
+
+/* USER CODE BEGIN Header_Motor_Task */
+/**
+* @brief Function implementing the MotorTask02 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Motor_Task */
+__weak void Motor_Task(void *argument)
+{
+  /* USER CODE BEGIN Motor_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END Motor_Task */
 }
 
 /* Private application code --------------------------------------------------*/

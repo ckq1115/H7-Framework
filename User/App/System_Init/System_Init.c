@@ -9,6 +9,7 @@
 #include "WS2812.h"
 #include "BMI088driver.h"
 #include "BSP_TIM.h"
+#include "Buzzer.h"
 #include "Comm_Router.h"
 #include "System_State.h"
 
@@ -30,13 +31,9 @@ void System_Init() {
 
     WS2812_Init();
     BMI088_init();
+    Buzzer_Init();
 
     HAL_TIM_Base_Start_IT(&htim4);
     TIM_PWM_Init();
-
-    WS2812_SetPixel(0, 0, 0, 200);
     System_State_Init();
-    __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 100);
-    HAL_Delay(500);
-    __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, 0);
 }

@@ -28,8 +28,8 @@ typedef struct {
 // 全局控制模式
 typedef enum {
     GLOBAL_SAFE_LOCK = 0,   // 全车安全锁定
-    GLOBAL_STANDBY,         // 全车待命
-    GLOBAL_NORMAL_MATCH,    // 正常遥控比赛/战斗模式
+    GLOBAL_STANDBY,
+    GLOBAL_NORMAL_MATCH,
 } Global_Mode_e;
 
 // 32 位故障位域映射
@@ -37,14 +37,13 @@ typedef union {
     struct {
         uint32_t imu_fault      : 1;  // Bit 0: IMU 任务层报错或死锁
         uint32_t remote_lost    : 1;  // Bit 1: 遥控器掉线
-        uint32_t chassis_offline : 1; // Bit 2: 底盘硬件组有电机掉线 (新增)
-        uint32_t gimbal_offline  : 1; // Bit 3: 云台硬件组有电机掉线 (新增)
-        uint32_t shoot_offline   : 1; // Bit 4: 发射硬件组有电机掉线 (新增)
+        uint32_t chassis_offline : 1; // Bit 2: 底盘有电机掉线
+        uint32_t gimbal_offline  : 1; // Bit 3: 云台有电机掉线
+        uint32_t shoot_offline   : 1; // Bit 4: 发射有电机掉线
         uint32_t vision_lost    : 1;  // Bit 5: 视觉上位机通信丢失
         uint32_t referee_lost   : 1;  // Bit 6: 裁判系统掉线
         uint32_t reserved       : 25;
     } bit;
-    uint32_t all_code;
 } System_Error_Code_u;
 
 //系统状态
@@ -69,5 +68,6 @@ typedef enum {
 void System_State_Init(void);
 void System_State_Report(Module_ID_e module_id, App_Status_e status);
 void System_State_Update(Offline_Check_t *remote_offline);
+void System_Remote_Buzzer_Feedback(void);
 
 #endif //H7_FRAMEWORK_SYSTEM_STATE_H

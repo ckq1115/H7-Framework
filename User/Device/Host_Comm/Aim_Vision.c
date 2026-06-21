@@ -38,7 +38,7 @@ bool Vision_Decode(uint8_t *rx_buf, Vision_Recv_t *recv_data)
     recv_data->target_found = (rx_buf[9] & 0x10) >> 4;
     recv_data->fire_command = (rx_buf[9] & 0x08) >> 3;
     recv_data->state        = (rx_buf[9] & 0x07);
-    // 解析 Pitch 规划值 (除以57.3将角度转为弧度，保留原代码逻辑)
+    // 解析 Pitch 规划值
     memcpy(f_cvt.buf, &rx_buf[10], 4);
     recv_data->pitch_plan = f_cvt.f * DEG2RAD;
     // 解析 Yaw 规划值

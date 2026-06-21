@@ -48,23 +48,18 @@ typedef struct {
     int16_t Angle_now;
     int16_t Speed_last;
     int16_t Speed_now;
-    int16_t acceleration;
-    float current;
+    int16_t current;
     int8_t temperature;
     int32_t Angle_Infinite;
-    int64_t Stuck_Time;
-    uint16_t Stuck_Flag[2];
     int16_t Laps;
-    float dt;
     float ralativeAngle;
 } DM_MOTOR_DATA_Typedef;
 
 typedef struct {
-    DM_MOTOR_DATA_Typedef DATA;
-    Feedforward_t PID_F;
+    const DM_MOTOR_DATA_Typedef *p_data;
     PID_t PID_P;
     PID_t PID_S;
-} DM_MOTOR_Typdef;
+} DM_MOTOR_Typedef;
 
 typedef enum {
     DM_CMD_MOTOR_MODE    = 0xfc,//电机使能

@@ -118,6 +118,9 @@ void Message_Center_Init(void) {
     }
 
     PubRegister("dbus_data",  &DBUS,      sizeof(DBUS));
-    PubRegister("all_motors", &All_Motor, sizeof(All_Motor));
     PubRegister("imu_data",   &IMU_Data,  sizeof(IMU_Data));
+
+    PubRegister("chassis_motors", &chassis_motors, sizeof(Chassis_Motor_Group_t));
+    PubRegister("gimbal_motors",  &gimbal_motors,  sizeof(Gimbal_Motor_Group_t));
+    PubRegister("shoot_motors",   &shoot_motors,   sizeof(Shoot_Motor_Group_t));
 }

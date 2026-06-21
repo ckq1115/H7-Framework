@@ -31,7 +31,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "Comm_Router.h"
-#include "Message_Center.h"
 #include "System_Init.h"
 /* USER CODE END Includes */
 
@@ -123,7 +122,6 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
-  Message_Center_Init();
   MX_FREERTOS_Init();
 
   /* Start scheduler */

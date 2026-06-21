@@ -143,11 +143,10 @@ uint8_t Swerve_Init(Swerve_Cfg_t *cfg, Swerve_State_t *state) {
     cfg->r = 0.06f;
     cfg->gear_d = 15.76f;
 
-
-    cfg->Swerve_offset[0] = (float)(-120.0f * 2*PI / 360.0f);
-    cfg->Swerve_offset[1] = (float)(240.0f * 2*PI / 360.0f);
-    cfg->Swerve_offset[2] = (float)(60.0f * 2*PI / 360.0f);
-    cfg->Swerve_offset[3] = (float)(60.0f * 2*PI / 360.0f);
+    cfg->Swerve_offset[0] = -120.0f * DEG2RAD;
+    cfg->Swerve_offset[1] = 240.0f * DEG2RAD;
+    cfg->Swerve_offset[2] = 60.0f * DEG2RAD;
+    cfg->Swerve_offset[3] = 60.0f * DEG2RAD;
 
     cfg->drive_dir[0] = 1;  cfg->drive_dir[1] = -1;
     cfg->drive_dir[2] = 1;  cfg->drive_dir[3] = -1;
@@ -161,32 +160,31 @@ uint8_t Swerve_Init(Swerve_Cfg_t *cfg, Swerve_State_t *state) {
     return 0;
 }
 
-void Swerve_Forward_Calc(Swerve_State_t *now, MOTOR_Typdef *motor, float gyro_vw, Swerve_Cfg_t *cfg) {
+void Swerve_Forward_Calc(Swerve_State_t *now, const Swerve_Feedback_t *fb, const Swerve_Cfg_t *cfg) {
     float b_x = 0, b_y = 0;
 
     for (int i = 0; i < 4; i++) {
-        now->wheel[i].v_wheel_now =
-            (motor->DJI_3508_Chassis[i].DATA.Speed_now * RPM_TO_RADS / cfg->gear_d)
-            * cfg->r;
+        now->wheel[i].v_wheel_now = (fb->wheel_rpm[i] * RPM_TO_RADS / cfg->gear_d) * cfg->r;
 
-        float theta_chassis = (motor->DJI_6020_Steer[i].DATA.Angle_now * ENCODER_TO_RAD) - cfg->Swerve_offset[i];
+        float theta_chassis = fb->steer_angle_rad[i] - cfg->Swerve_offset[i];
         now->wheel[i].theta_now = normalize_to_pi(theta_chassis);
 
         float vix = now->wheel[i].v_wheel_now * cosf(theta_chassis);
         float viy = now->wheel[i].v_wheel_now * sinf(theta_chassis);
 
-        b_x += vix + gyro_vw * cfg->R * sinf(cfg->phi[i]);
-        b_y += viy - gyro_vw * cfg->R * cosf(cfg->phi[i]);
+        b_x += vix + fb->gyro_vw * cfg->R * sinf(cfg->phi[i]);
+        b_y += viy - fb->gyro_vw * cfg->R * cosf(cfg->phi[i]);
     }
 
     now->vx = b_x / 4.0f;
     now->vy = b_y / 4.0f;
-    now->vw = gyro_vw;
+    now->vw = fb->gyro_vw;
 }
 
-void Swerve_Inverse_Calc(float *ff_out, MOTOR_Typdef *motor,
-                        float ax, float ay, float aw,
-                        float vx, float vy, float vw, Swerve_Cfg_t *cfg, Swerve_State_t *state)
+void Swerve_Inverse_Calc(Swerve_Command_t *cmd, Swerve_State_t *state,
+                         float ax, float ay, float aw,
+                         float vx, float vy, float vw,
+                         const Swerve_Feedback_t *fb, const Swerve_Cfg_t *cfg)
 {
     state->ax_target = ax;
     state->ay_target = ay;
@@ -200,7 +198,7 @@ void Swerve_Inverse_Calc(float *ff_out, MOTOR_Typdef *motor,
         float viy = vy + cfg->R * vw * cosf(cfg->phi[i]) * cfg->drive_dir[i];
         float v_mag = sqrtf(vix * vix + viy * viy);
 
-        float current_theta_motor = motor->DJI_6020_Steer[i].DATA.Angle_Infinite * ENCODER_TO_RAD;
+        float current_theta_motor = fb->steer_angle_rad[i];
         float current_theta_chassis = current_theta_motor - cfg->Swerve_offset[i];
 
         float target_theta_raw;
@@ -223,13 +221,15 @@ void Swerve_Inverse_Calc(float *ff_out, MOTOR_Typdef *motor,
         state->wheel[i].theta_target = normalize_to_pi(current_theta_chassis + diff);
         state->wheel[i].v_wheel_target = speed_dir * v_mag;
 
-        motor->DJI_6020_Steer[i].PID_P.Ref = current_theta_motor + diff;
-        motor->DJI_3508_Chassis[i].PID_S.Ref = state->wheel[i].v_wheel_target / cfg->r * cfg->gear_d / RPM_TO_RADS;
+        cmd->target_steer_angle_rad[i] = current_theta_motor + diff;
+        cmd->target_wheel_rpm[i] = (state->wheel[i].v_wheel_target / cfg->r) * cfg->gear_d / RPM_TO_RADS;
 
         float F_ix = (cfg->m * ax - cfg->drive_dir[i] * (cfg->J * aw / cfg->R) * sinf(cfg->phi[i])) / 4.0f;
         float F_iy = (cfg->m * ay + cfg->drive_dir[i] * (cfg->J * aw / cfg->R) * cosf(cfg->phi[i])) / 4.0f;
         float F_drive = F_ix * cosf(current_theta_chassis) + F_iy * sinf(current_theta_chassis);
+
         state->wheel[i].ff_out = speed_dir * (F_drive * cfg->r) * M3508_NM_TO_RAW * cfg->drive_dir[i];
-        ff_out[i] = state->wheel[i].ff_out;
+
+        cmd->ff_torque_raw[i] = state->wheel[i].ff_out;
     }
 }

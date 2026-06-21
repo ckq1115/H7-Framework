@@ -9,10 +9,10 @@
 #include <math.h>
 
 #include "BMI088driver.h"
+#include "BSP_TIM.h"
 #include "Message_Center.h"
 #include "System_State.h"
 #include "VQF_filter.h"
-#include "WS2812.h"
 
 
 #define IMU_TARGET_TEMP        40.0f     // 目标温度 (℃)
@@ -55,7 +55,7 @@ void Set_Heater_PWM(float pwm)
 {
     // 限幅保护
     pwm = (pwm < 0.0f) ? 0.0f : (pwm > HEATER_PWM_MAX) ? HEATER_PWM_MAX : pwm;
-    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, (uint32_t)pwm);
+    TIM_Set_Compare(PWM_TEMP_CTRL, pwm);
 }
 
 /**
@@ -83,7 +83,7 @@ void IMU_Temp_Control_Init(void)
 
     // 2. 初始化模糊规则参数
     Fuzzy_Rule_Init(&fuzzy_rule_temp, NULL, NULL, NULL,
-        -20.0f, 0.05f, 0.0f, // Kp, Ki, Kd Ratios
+        -20.0f, -0.05f, 0.0f, // Kp, Ki, Kd Ratios
         1.5f, // eStep
         0.125f // ecStep
         );
@@ -179,7 +179,6 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
 
         case FUSION_RUN:
             System_State_Report(ID_IMU,STATUS_RUN);
-            WS2812_SetPixel(0, 20, 110, 90);
             const float AXIS_MAP[3][3] = {
                 {0.0f, 1.0f, 0.0f}, // Logical X = + Physical X
                 {-1.0f, 0.0f, 0.0f}, // Logical Y = + Physical Y
@@ -222,7 +221,6 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
             break;
         case ERROR_STATE:
             System_State_Report(ID_IMU,STATUS_ERROR);
-            WS2812_SetPixel(0, 255, 0, 0);// 红色表示错误
             if (BMI088_init() == 1) // 尝试重新初始化IMU，成功则认为错误已恢复
             {
                 imu_ctrl_state = TEMP_INIT; // 成功则回到初始状态
