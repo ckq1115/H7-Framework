@@ -24,7 +24,7 @@
 #include "usbd_conf.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/

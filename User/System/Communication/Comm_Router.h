@@ -9,13 +9,12 @@
 #include "stm32h723xx.h"
 #include "main.h"
 
-
 // CAN 解析函数指针类型
 typedef void (*CAN_Resolve_Func_t)(void *device_ptr, uint8_t *data);
 // UART 解析函数指针类型
 typedef void (*UART_Resolve_Func_t)(uint8_t *data, void *device_ptr, uint16_t size);
 
-// CAN 路由表条目 (已剔除 offline 逻辑)
+// CAN 路由表
 typedef struct {
     FDCAN_GlobalTypeDef *instance; // 对应的硬件总线
     uint32_t id;                   // 绑定的 CAN ID
@@ -23,7 +22,7 @@ typedef struct {
     CAN_Resolve_Func_t resolve;    // 对应的解析函数
 } CAN_Rx_Route_t;
 
-// UART 路由表条目 (已剔除 offline 逻辑)
+// UART 路由表
 typedef struct {
     UART_HandleTypeDef *huart;        // 对应的硬件总线
     uint16_t expected_size;         // 期望接收的字节数
@@ -34,7 +33,6 @@ typedef struct {
     UART_Resolve_Func_t resolve;    // 对应的解析函数
 } UART_Rx_Route_t;
 
-// 函数声明
 void CAN_Router_Init(void);
 void UART_Router_Init(void);
 

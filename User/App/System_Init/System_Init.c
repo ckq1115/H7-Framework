@@ -10,6 +10,7 @@
 #include "BMI088driver.h"
 #include "BSP_TIM.h"
 #include "Buzzer.h"
+#include "Comm_DualBoard.h"
 #include "Comm_Router.h"
 #include "System_State.h"
 
@@ -32,6 +33,12 @@ void System_Init() {
     WS2812_Init();
     BMI088_init();
     Buzzer_Init();
+    //TODO 这里不该出现HAL库代码的，偷个懒后面再改
+    //开启XT30 2+2 可控输出
+    HAL_GPIO_WritePin(POWER_24V_2_GPIO_Port, POWER_24V_2_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(POWER_24V_1_GPIO_Port, POWER_24V_1_Pin, GPIO_PIN_SET);
+    //开启对外5V
+    HAL_GPIO_WritePin(POWER_5V_GPIO_Port, POWER_5V_Pin, GPIO_PIN_SET);
 
     HAL_TIM_Base_Start_IT(&htim4);
     TIM_PWM_Init();

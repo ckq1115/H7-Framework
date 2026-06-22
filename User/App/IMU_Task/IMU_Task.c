@@ -67,7 +67,7 @@ void IMU_Temp_Control_Init(void)
     // 1. 初始化PID控制器基础配置
     PID_Init(&imu_temp,
             400.0f,               // MaxOut
-             30.0f,                // IntegralLimit
+             45.0f,                // IntegralLimit
              (float*)&base_pid,     // 指向初始参数
              7.5f,                  // CoefA
              1.0f,                  // CoefB
@@ -83,7 +83,7 @@ void IMU_Temp_Control_Init(void)
 
     // 2. 初始化模糊规则参数
     Fuzzy_Rule_Init(&fuzzy_rule_temp, NULL, NULL, NULL,
-        -20.0f, -0.05f, 0.0f, // Kp, Ki, Kd Ratios
+        -20.0f, 0.05f, 0.0f, // Kp, Ki, Kd Ratios
         1.5f, // eStep
         0.125f // ecStep
         );

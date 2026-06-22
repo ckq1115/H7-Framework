@@ -1,95 +1,360 @@
 //
-// Created by CaoKangqi on 2026/6/19.
+// Created by H7_Framework
 //
 
 #include "System_State.h"
-
 #include "Buzzer.h"
+#include "WS2812.h"
+#include "stm32h7xx_hal.h"
+#include <string.h>
+#include "Message_Center.h"
 #include "DBUS.h"
 #include "Referee.h"
-#include "WS2812.h"
 
 System_State_t sys_state;
+static Subscriber_t *dbus_sub = NULL;
+static Subscriber_t *referee_sub = NULL;
+static Publisher_t  *sys_state_pub = NULL;
+
+#define MAX_FRAGMENTS 32
+
+#define RGB_OFF       0,   0,   0
+#define RGB_RED       255, 0,   0
+#define RGB_GREEN     0,   255, 0
+#define RGB_BLUE      0,   0,   255
+#define RGB_YELLOW    255, 200, 0
+#define RGB_CYAN      0,   200, 200
+
+typedef struct {
+    uint16_t freq;
+    uint16_t duration;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} Step_t;
+
+typedef struct {
+    Step_t steps[MAX_FRAGMENTS];
+    uint8_t total;
+} Flow_t;
+
+static const Flow_t Flow_Init = {
+    .steps = {
+        {1500, 80, RGB_CYAN}, {0, 30, RGB_OFF},
+        {2500, 120, RGB_CYAN}, {0, 50, RGB_OFF},
+        {1500, 80, RGB_CYAN}, {0, 30, RGB_OFF}, {2500, 120, RGB_CYAN}},
+    .total = 7
+};
+static const Flow_t Flow_Hint = {.steps = {
+    {2500, 120, RGB_GREEN},
+    {0, 20, RGB_OFF},
+    {3000, 180, RGB_GREEN}},
+    .total = 3
+};
+static const Flow_t Flow_Lost = {.steps = {
+    {1500, 200, RGB_BLUE},
+    {0, 50, RGB_OFF},
+    {1500, 200, RGB_BLUE}},
+    .total = 3
+};
+
+static const Flow_t Flow_Remote_Recover = {.steps = {
+    {2500, 100, RGB_BLUE},
+    {0, 40, RGB_OFF},
+    {3000, 150, RGB_GREEN}},
+    .total = 3
+};
+
+// 动态错误报警流
+static Flow_t Flow_Dynamic_Error;
+
+// 控制器与状态机变量
+static struct {
+    bool     is_running;
+    uint32_t timer_ms;
+    Step_t   steps[MAX_FRAGMENTS];
+    uint8_t  total;
+    uint8_t  idx;
+} ctrl;
+
+static struct {
+    bool ref_online;
+    bool any_ref_pwr;
+    bool chassis_pwr, chassis_grace;
+    bool gimbal_pwr,  gimbal_grace;
+    bool shoot_pwr,   shoot_grace;
+} pwr_info;
+
+static uint32_t state_timer = 0;
+static System_Error_Code_u last_error = {0};
+static const Flow_t *playing_flow = NULL;
+
+static void Action_Push(const Flow_t *flow);
+static void Update_Power_Status(uint32_t now, Referee_Data_t *ref);
+static bool Check_Boot_Sequence(uint32_t now);
+static void Update_Error_Flags(Offline_Check_t *remote, bool in_boot_grace_period);
+static void Arbitrate_Global_Mode(uint32_t now);
+static void Build_And_Play_Module_Error(void);
+
+
+static bool Is_All_Tasks_Running(void) {
+    return (sys_state.task_health.Chassis == STATUS_RUN &&
+            sys_state.task_health.Gimbal  == STATUS_RUN &&
+            sys_state.task_health.Shoot   == STATUS_RUN);
+}
 
 void System_State_Init(void) {
-    // 默认全车任务状态初始化为 STATUS_INIT
-    sys_state.task_health.IMU     = STATUS_INIT;
-    sys_state.task_health.Chassis = STATUS_INIT;
-    sys_state.task_health.Gimbal  = STATUS_INIT;
-    sys_state.task_health.Shoot   = STATUS_INIT;
-    sys_state.task_health.Vision  = STATUS_INIT;
-
-    // 默认全局运行模式安全锁死
-    sys_state.global_mode = GLOBAL_SAFE_LOCK;
-
-    // 错误及限制初始化
+    memset(&sys_state, 0, sizeof(sys_state));
+    sys_state.global_mode = GLOBAL_INIT_STAGE;
     sys_state.power_limit = 45.0f;
-    WS2812_SetMode_Breathing(0,0,0,200,3);
+    memset(&ctrl, 0, sizeof(ctrl));
+
+    dbus_sub    = SubRegister("dbus_data", sizeof(DBUS_Typedef));
+    referee_sub = SubRegister("referee_data", sizeof(Referee_Data_t));
+    sys_state_pub = PubRegister("system_state", &sys_state, sizeof(System_State_t));
+
+    System_Trigger_Notify(GLOBAL_INIT_STAGE);
 }
 
-void System_State_Report(Module_ID_e module_id, App_Status_e status) {
-    switch (module_id) {
-        case ID_IMU:     sys_state.task_health.IMU     = status; break;
-        case ID_CHASSIS: sys_state.task_health.Chassis = status; break;
-        case ID_GIMBAL:  sys_state.task_health.Gimbal  = status; break;
-        case ID_SHOOT:   sys_state.task_health.Shoot   = status; break;
-        case ID_VISION:  sys_state.task_health.Vision  = status; break;
+void System_State_Report(Module_ID_e id, App_Status_e status) {
+    if (id < MODULE_COUNT) {
+        App_Status_e *health_array = (App_Status_e *)&sys_state.task_health;
+        health_array[id] = status;
     }
 }
 
-/**
- * @brief 系统状态集中裁决更新
- * @note  融合了底层离线组状态监测 Is_Group_Online
- */
-void System_State_Update(Offline_Check_t *remote_offline) {
+void System_State_Update(void) {
+    uint32_t now = HAL_GetTick();
 
-    // 遥控器在线检测
-    sys_state.error.bit.remote_lost   = (remote_offline != NULL) ? !remote_offline->is_online : true;
-    // 判断各执行机构底层是否有设备离线
-    sys_state.error.bit.chassis_offline = !Is_Group_Online(CHASSIS);
-    sys_state.error.bit.gimbal_offline  = !Is_Group_Online(GIMBAL);
-    sys_state.error.bit.shoot_offline   = !Is_Group_Online(SHOOT);
+    DBUS_Typedef local_dbus = {0};
+    Referee_Data_t local_ref = {0};
 
-    // 统计应用层任务（如 IMU、视觉）的状态报错
-    sys_state.error.bit.imu_fault     = (sys_state.task_health.IMU == STATUS_ERROR);
-    sys_state.error.bit.vision_lost    = (sys_state.task_health.Vision == STATUS_LOST);
+    if (dbus_sub)    SubGetMessage(dbus_sub, &local_dbus);
+    if (referee_sub) SubGetMessage(referee_sub, &local_ref);
 
-    if (sys_state.error.bit.remote_lost ||
-        sys_state.error.bit.imu_fault   ||
-        sys_state.error.bit.chassis_offline ||
-        sys_state.error.bit.gimbal_offline)
-    {
-        sys_state.global_mode = GLOBAL_SAFE_LOCK;
+    Update_Power_Status(now, &local_ref);
+
+    bool in_boot_grace_period = !Check_Boot_Sequence(now);
+
+    Update_Error_Flags(&local_dbus.offline, in_boot_grace_period);
+    Arbitrate_Global_Mode(now);
+
+    if (sys_state_pub) {
+        PubPushMessage(sys_state_pub, &sys_state);
     }
-    System_Remote_Buzzer_Feedback();
 }
 
+// 电源状态与边沿检测提取
+static void Update_Power_Status(uint32_t now, Referee_Data_t *ref) {
+    pwr_info.ref_online = ref->offline.is_online;
 
-void System_Remote_Buzzer_Feedback(void)
-{
-    static uint8_t last_remote_lost = 1; // 记录上一次的遥控器在线状态
-    static uint32_t last_alarm_time = 0; // 记录上一次触发警报的时间戳
+    pwr_info.chassis_pwr = pwr_info.ref_online ? ref->robot_status.power_management_chassis_output : true;
+    pwr_info.gimbal_pwr  = pwr_info.ref_online ? ref->robot_status.power_management_gimbal_output  : true;
+    pwr_info.shoot_pwr   = pwr_info.ref_online ? ref->robot_status.power_management_shooter_output : true;
 
-    uint32_t current_time = HAL_GetTick(); // 获取当前系统毫秒时间戳
-    uint8_t current_remote_lost = sys_state.error.bit.remote_lost; // 状态检测
+    static bool last_c = false, last_g = false, last_s = false;
+    static uint32_t tick_c = 0, tick_g = 0, tick_s = 0;
 
-    if (current_remote_lost == 0)
-    {
-        if (last_remote_lost == 1)
-        {
-            Buzzer_Trigger_Status(BUZZER_STATUS_CLICK_HINT);
-            WS2812_SetMode_Breathing(0,0,150,0,3);
+    if (pwr_info.chassis_pwr && !last_c) tick_c = now;
+    if (pwr_info.gimbal_pwr  && !last_g) tick_g = now;
+    if (pwr_info.shoot_pwr   && !last_s) tick_s = now;
+
+    last_c = pwr_info.chassis_pwr;
+    last_g = pwr_info.gimbal_pwr;
+    last_s = pwr_info.shoot_pwr;
+
+    pwr_info.chassis_grace = pwr_info.chassis_pwr && ((now - tick_c) < 1800);
+    pwr_info.gimbal_grace  = pwr_info.gimbal_pwr  && ((now - tick_g) < 1800);
+    pwr_info.shoot_grace   = pwr_info.shoot_pwr   && ((now - tick_s) < 1800);
+
+    pwr_info.any_ref_pwr = pwr_info.ref_online &&
+                           (ref->robot_status.power_management_chassis_output ||
+                            ref->robot_status.power_management_gimbal_output ||
+                            ref->robot_status.power_management_shooter_output);
+}
+
+// 开机自检等待
+static bool Check_Boot_Sequence(uint32_t now) {
+    static bool init_done = false;
+    if (init_done) return true;
+
+    if (now < 1800 || (sys_state.global_mode == GLOBAL_INIT_STAGE && ctrl.is_running)) {
+        return false;
+    }
+
+    if (now < 21800 && !Is_All_Tasks_Running() && !pwr_info.any_ref_pwr) {
+        if (!ctrl.is_running && sys_state.global_mode == GLOBAL_INIT_STAGE) {
+            WS2812_SetMode_Breathing(0, RGB_CYAN, 3.0f);
         }
-        last_alarm_time = 0;
+        return false;
     }
-    else
-    {
-        if (current_time - last_alarm_time >= 1200)
-        {
-            Buzzer_Trigger_Status(BUZZER_STATUS_WARN_DISCONNECT);
-            WS2812_SetMode_Breathing(0,200,75,0,0.5f);
-            last_alarm_time = current_time;
+
+    init_done = true;
+    return true;
+}
+
+// 更新错误标志位
+static void Update_Error_Flags(Offline_Check_t *remote, bool in_boot_grace_period) {
+    sys_state.error.bit.remote_lost  = !remote->is_online;
+    sys_state.error.bit.referee_lost = !pwr_info.ref_online;
+    sys_state.error.bit.imu_fault    = (sys_state.task_health.IMU == STATUS_ERROR || sys_state.task_health.IMU == STATUS_INIT);
+
+    if (Is_All_Tasks_Running() || in_boot_grace_period) {
+        sys_state.error.bit.chassis_offline = 0;
+        sys_state.error.bit.gimbal_offline  = 0;
+        sys_state.error.bit.shoot_offline   = 0;
+    } else {
+        bool chassis_fault = (sys_state.task_health.Chassis == STATUS_LOST || sys_state.task_health.Chassis == STATUS_ERROR);
+        bool gimbal_fault  = (sys_state.task_health.Gimbal  == STATUS_LOST || sys_state.task_health.Gimbal  == STATUS_ERROR);
+        bool shoot_fault   = (sys_state.task_health.Shoot   == STATUS_LOST || sys_state.task_health.Shoot   == STATUS_ERROR);
+
+        sys_state.error.bit.chassis_offline = chassis_fault && pwr_info.chassis_pwr && !pwr_info.chassis_grace;
+        sys_state.error.bit.gimbal_offline  = gimbal_fault  && pwr_info.gimbal_pwr  && !pwr_info.gimbal_grace;
+        sys_state.error.bit.shoot_offline   = shoot_fault   && pwr_info.shoot_pwr   && !pwr_info.shoot_grace;
+    }
+}
+
+// 状态仲裁
+static void Arbitrate_Global_Mode(uint32_t now) {
+    if (now < 1800 || (sys_state.global_mode == GLOBAL_INIT_STAGE && ctrl.is_running)) {
+        return;
+    }
+
+    Global_Mode_e next_mode = GLOBAL_NORMAL_MATCH;
+
+    if (sys_state.error.bit.chassis_offline || sys_state.error.bit.gimbal_offline || sys_state.error.bit.shoot_offline) {
+        next_mode = GLOBAL_MODULE_ERROR;
+    } else if (sys_state.error.bit.remote_lost) {
+        next_mode = GLOBAL_STANDBY;
+    } else if (sys_state.error.bit.imu_fault) {
+        next_mode = GLOBAL_SAFE_LOCK;
+    }
+
+    if (next_mode != sys_state.global_mode) {
+        if (sys_state.global_mode != GLOBAL_NORMAL_MATCH && next_mode == GLOBAL_NORMAL_MATCH) {
+            System_Trigger_Hint();
+            WS2812_SetMode_Breathing(0, RGB_GREEN, 3.0f);
+        } else {
+            System_Trigger_Notify(next_mode);
+        }
+        sys_state.global_mode = next_mode;
+        state_timer = now;
+    } else {
+        bool remote_recovered = (last_error.bit.remote_lost == 1) && (sys_state.error.bit.remote_lost == 0);
+        if (remote_recovered && sys_state.global_mode != GLOBAL_NORMAL_MATCH) {
+            Action_Push(&Flow_Remote_Recover);
+            state_timer = now;
         }
     }
-    last_remote_lost = current_remote_lost;
+    last_error.all = sys_state.error.all;
+
+    uint32_t interval_ms = 0;
+    switch (sys_state.global_mode) {
+        case GLOBAL_MODULE_ERROR: interval_ms = 1000; break;
+        case GLOBAL_SAFE_LOCK:    interval_ms = 1200; break;
+        case GLOBAL_STANDBY:      interval_ms = 1000; break;
+        default: break;
+    }
+
+    if (interval_ms > 0 && (now - state_timer >= interval_ms) && !ctrl.is_running) {
+        System_Trigger_Notify(sys_state.global_mode);
+        state_timer = now;
+    }
+}
+
+
+static void Action_Push(const Flow_t *flow) {
+    if (!flow || flow->total == 0) return;
+    if (ctrl.is_running && playing_flow == flow) return;
+
+    playing_flow = flow;
+    memcpy(ctrl.steps, flow->steps, flow->total * sizeof(Step_t));
+    ctrl.total = flow->total;
+    ctrl.idx = 0;
+    ctrl.is_running = true;
+    ctrl.timer_ms = ctrl.steps[0].duration;
+
+    Buzzer_Set_Freq(ctrl.steps[0].freq);
+    WS2812_SetMode_Static(0, ctrl.steps[0].r, ctrl.steps[0].g, ctrl.steps[0].b);
+}
+
+// 动态报警序列生成器
+static void Build_And_Play_Module_Error(void) {
+    Flow_Dynamic_Error.total = 0;
+
+    uint8_t offline_counts[MODULE_COUNT] = {0};
+
+    if (sys_state.error.bit.chassis_offline) offline_counts[ID_CHASSIS] = ID_CHASSIS + 1;
+    if (sys_state.error.bit.gimbal_offline)  offline_counts[ID_GIMBAL]  = ID_GIMBAL  + 1;
+    if (sys_state.error.bit.shoot_offline)   offline_counts[ID_SHOOT]   = ID_SHOOT   + 1;
+    if (sys_state.error.bit.vision_lost)     offline_counts[ID_VISION]  = ID_VISION  + 1;
+    if (sys_state.error.bit.imu_fault)       offline_counts[ID_IMU]     = ID_IMU     + 1;
+
+    for (int i = 0; i < MODULE_COUNT; i++) {
+        if (offline_counts[i] > 0) {
+            for (int beep = 0; beep < offline_counts[i]; beep++) {
+                if (Flow_Dynamic_Error.total < MAX_FRAGMENTS - 2) {
+                    Flow_Dynamic_Error.steps[Flow_Dynamic_Error.total++] = (Step_t){3000, 80, RGB_RED};
+                    Flow_Dynamic_Error.steps[Flow_Dynamic_Error.total++] = (Step_t){0, 80, RGB_OFF};
+                }
+            }
+            // 模块间间隔
+            if (Flow_Dynamic_Error.total > 0) {
+                Flow_Dynamic_Error.steps[Flow_Dynamic_Error.total - 1].duration = 800;
+            }
+        }
+    }
+
+    if (Flow_Dynamic_Error.total == 0) {
+        Flow_Dynamic_Error.steps[0] = (Step_t){3000, 500, RGB_YELLOW};
+        Flow_Dynamic_Error.steps[1] = (Step_t){0, 500, RGB_OFF};
+        Flow_Dynamic_Error.total = 2;
+    }
+
+    Action_Push(&Flow_Dynamic_Error);
+}
+
+void System_Trigger_Notify(Global_Mode_e mode) {
+    switch(mode) {
+        case GLOBAL_INIT_STAGE:
+            Action_Push(&Flow_Init);
+            break;
+        case GLOBAL_MODULE_ERROR:
+        case GLOBAL_SAFE_LOCK:
+            Build_And_Play_Module_Error();
+            break;
+        case GLOBAL_STANDBY:
+            Action_Push(&Flow_Lost);
+            break;
+        default: break;
+    }
+}
+
+void System_Trigger_Hint(void) {
+    if (!ctrl.is_running) Action_Push(&Flow_Hint);
+}
+
+void System_State_Ticks(void) {
+    if (!ctrl.is_running) return;
+
+    if (ctrl.timer_ms > 0) {
+        ctrl.timer_ms--;
+        return;
+    }
+
+    if (++ctrl.idx < ctrl.total) {
+        ctrl.timer_ms = ctrl.steps[ctrl.idx].duration;
+        Buzzer_Set_Freq(ctrl.steps[ctrl.idx].freq);
+        WS2812_SetMode_Static(0, ctrl.steps[ctrl.idx].r, ctrl.steps[ctrl.idx].g, ctrl.steps[ctrl.idx].b);
+    } else {
+        Buzzer_Off();
+        if (sys_state.global_mode == GLOBAL_NORMAL_MATCH) {
+            WS2812_SetMode_Breathing(0, RGB_GREEN, 3.0f);
+        } else {
+            WS2812_SetMode_Static(0, RGB_OFF);
+        }
+
+        ctrl.is_running = false;
+        playing_flow = NULL;
+    }
 }

@@ -39,20 +39,13 @@ void Motor_Task(void *argument)
     dbus_sub = SubRegister("dbus_data", sizeof(DBUS_Typedef));
     motor_sub = SubRegister("chassis_motors", sizeof(Chassis_Motor_Group_t));
     Chassis_Control_Init();
-    Buzzer_Trigger_Status(BUZZER_STATUS_INIT_SUCCESS);
     for(;;)
     {
-        if (imu_sub != NULL){
-            SubGetMessage(imu_sub, &imu);
-        }
-        if (dbus_sub != NULL) {
-            SubGetMessage(dbus_sub, &chassis_dbus);
-        }
-        if (motor_sub != NULL) {
-            SubGetMessage(motor_sub, &chassis_m);
-        }
+        if (imu_sub) SubGetMessage(imu_sub, &imu);
+        if (dbus_sub) SubGetMessage(dbus_sub, &chassis_dbus);
+        if (motor_sub) SubGetMessage(motor_sub, &chassis_m);
+
         Chassis_Control_Task(&chassis_m,&imu,&chassis_dbus);
-        Buzzer_Ticks_1ms();
         osDelay(1);
     }
 }

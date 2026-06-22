@@ -50,6 +50,6 @@ extern int open_cap_flag;
 /* 函数声明 */
 void Power_Cap_Rx(void *instance, uint8_t *rx_buf);
 
-void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, Cap_t *cap_ptr, float basic_power_limit, User_Data_T *referee);
+void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, Cap_t *cap, float power_limit, Referee_Data_t *referee);
 
 #endif //G4_FRAMEWORK_POWER_CAP_H

@@ -33,14 +33,14 @@ void Power_Cap_Rx(void *instance, uint8_t *rx_buf)
 /**
  * @brief 电容控制数据发送
  */
-void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, Cap_t *cap_ptr, float basic_power_limit, User_Data_T *referee)
+void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, Cap_t *cap, float power_limit, Referee_Data_t *referee)
 {
-    if (cap_ptr == NULL || referee == NULL) return;
+    if (cap == NULL || referee == NULL) return;
 
-    cap_ptr->set.Control.power_key      = (uint8_t)open_cap_flag;
-    cap_ptr->set.Control.capPowerLimit  = (uint8_t)basic_power_limit; // 直接使用传进来的数值
-    cap_ptr->set.Control.robot_state    = (referee->robot_status.current_HP > 0) ? 1 : 0;
-    cap_ptr->set.Control.check_code     = 0xAA;
+    cap->set.Control.power_key      = (uint8_t)open_cap_flag;
+    cap->set.Control.capPowerLimit  = (uint8_t)power_limit;
+    cap->set.Control.robot_state    = (referee->robot_status.current_HP > 0) ? 1 : 0;
+    cap->set.Control.check_code     = 0xAA;
 
-    FDCAN_Send_Msg(hcan, can_id, cap_ptr->set.raw_data, 8);
+    FDCAN_Send_Msg(hcan, can_id, cap->set.raw_data, 8);
 }

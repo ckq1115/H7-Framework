@@ -30,14 +30,14 @@ static const TIM_PWM_Map_t PWM_Hardware_Table[PWM_DEVICE_CNT] = {
 void TIM_PWM_Init(void)
 {
     for (int i = 0; i < PWM_DEVICE_CNT; i++) {
-        // 安全防御：跳过未分配硬件的虚职槽位
+
         if (PWM_Hardware_Table[i].htim == NULL) continue;
-        // 识别通道属性，分流调用 HAL 核心库函数
+        // 识别通道属性，分流调用 HAL 库函数
         if (PWM_Hardware_Table[i].type == CHANNEL_TYPE_COMP) {
-            // 启动高级定时器特有的互补通道
+            // 启动定时器互补通道
             HAL_TIMEx_PWMN_Start(PWM_Hardware_Table[i].htim, PWM_Hardware_Table[i].channel);
         } else {
-            // 启动通用定时器的普通正向通道
+            // 启动通用定时器的普通通道
             HAL_TIM_PWM_Start(PWM_Hardware_Table[i].htim, PWM_Hardware_Table[i].channel);
         }
     }

@@ -1,10 +1,10 @@
 #include "Referee.h"
 #include <stdbool.h>
 
-User_Data_T User_data;
+Referee_Data_t Referee;
 uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH]__attribute__((section(".RAM_D2")));
 
-static void Referee_System_Info_Update(uint16_t cmd_id, uint8_t *data_ptr, User_Data_T *user_data);
+static void Referee_System_Info_Update(uint16_t cmd_id, uint8_t *data_ptr, Referee_Data_t *user_data);
 
 void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size)
 {
@@ -13,17 +13,16 @@ void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size)
     uint16_t cmd_id = 0;
     uint8_t *data_ptr;
 
-    // 静态变量：用于保存上一次断包遗留下来的“尾巴”
+    // 静态变量：用于保存上一次数据中的断包
     static uint8_t remain_buf[REFEREE_MAX_PACKET_SIZE];
-    static uint16_t remain_len = 0; // 记录遗留尾巴的实际长度
+    static uint16_t remain_len = 0; // 记录断包的实际长度
 
     if (Buff == NULL || Size == 0) return;
 
-    /* ----- 步骤一：处理上一次遗留下来的断包 ----- */
+    // 处理上一次遗留下来的断包
     if (remain_len > 0)
     {
-        // 计算新缓冲区需要借多少字节过来才能凑成一包
-        // 注意：此时遗留包的 remain_buf 里已经包含了原本的帧头，我们可以直接读出它需要的 data_length
+        // 计算新缓冲区需要借多少字节过来才能凑成一包，此时遗留包的 remain_buf 里已经包含了原本的帧头，我们可以直接读出它需要的 data_length
         if (remain_len >= 3) // 至少要拿到长度字段
         {
             data_length = (uint16_t)(remain_buf[2] << 8 | remain_buf[1])
@@ -41,14 +40,14 @@ void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size)
                 {
                     cmd_id = (uint16_t)(remain_buf[FrameHeader_Length + 1] << 8 | remain_buf[FrameHeader_Length]);
                     data_ptr = &remain_buf[FrameHeader_Length + CMDID_Length];
-                    Referee_System_Info_Update(cmd_id, data_ptr, &User_data);
+                    Referee_System_Info_Update(cmd_id, data_ptr, &Referee);
                 }
                 // 拼接包处理完毕，新缓冲区的指针需要向后跳过被借走的 need_len 字节
                 i = need_len;
             }
             else
             {
-                // 如果新来的数据太短，连剩下的断包都填不满（极端情况）
+                // 如果新来的数据太短，连剩下的断包都填不满
                 if (remain_len + Size < REFEREE_MAX_PACKET_SIZE) {
                     memcpy(&remain_buf[remain_len], Buff, Size);
                     remain_len += Size;
@@ -76,15 +75,15 @@ void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size)
             {
                 data_length = (uint16_t)(Buff[i+2] << 8 | Buff[i+1])
                             + FrameHeader_Length + CMDID_Length + CRC16_Length;
-                // 【核心判断】检查整帧是否超出了当前缓冲区的边界（断包发生！）
+                // 检查整帧是否超出了当前缓冲区的边界
                 if (i + data_length > Size)
                 {
-                    // 把这一段未完成的“尾巴”暂存到 remain_buf 中，留到下一次回调拼接
+                    // 把这一段断包暂存到 remain_buf 中，留到下一次回调拼接
                     remain_len = Size - i;
                     if (remain_len <= REFEREE_MAX_PACKET_SIZE) {
                         memcpy(remain_buf, &Buff[i], remain_len);
                     } else {
-                        remain_len = 0; // 防御性清空
+                        remain_len = 0;
                     }
                     break; // 已经到缓冲区末尾了，直接退出循环
                 }
@@ -94,7 +93,7 @@ void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size)
                     cmd_id = (uint16_t)(Buff[i + FrameHeader_Length + 1] << 8 | Buff[i + FrameHeader_Length]);
                     data_ptr = &Buff[i + FrameHeader_Length + CMDID_Length];
 
-                    Referee_System_Info_Update(cmd_id, data_ptr, &User_data);
+                    Referee_System_Info_Update(cmd_id, data_ptr, &Referee);
 
                     i += data_length; // 成功跳过整帧
                     continue;
@@ -105,7 +104,7 @@ void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size)
     }
 }
 
-static void Referee_System_Info_Update(uint16_t cmd_id, uint8_t *data_ptr, User_Data_T *user_data)
+static void Referee_System_Info_Update(uint16_t cmd_id, uint8_t *data_ptr, Referee_Data_t *user_data)
 {
     user_data->offline.last_feed_tick = HAL_GetTick();
     switch (cmd_id)

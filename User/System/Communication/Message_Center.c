@@ -9,6 +9,7 @@
 #include "DBUS.h"
 #include "All_Motor.h"
 #include "IMU_Task.h"
+#include "Referee.h"
 
 #define MAX_TOPICS      32
 #define MAX_NAME_LEN    32
@@ -16,7 +17,7 @@
 // 内部主题结构体
 typedef struct {
     char name[MAX_NAME_LEN]; // 频道名称
-    void *data_ptr;          // 指向真实的外部全局变量内存 (核心变更)
+    void *data_ptr;          // 指向真实的外部全局变量内存
     size_t size;             // 结构体大小
     uint8_t is_used;         // 是否被占用
 } Real_Topic_t;
@@ -70,6 +71,13 @@ static Real_Topic_t* Find_Or_Create_Topic(const char *name, size_t size) {
     return t;
 }
 
+/**
+ * @brief 注册发布频道（主要供消息中心初始化或任务初始化时绑定全局结构体）
+ * @param name 消息频道的唯一名字 (例如 "imu_data")
+ * @param external_ptr 指向外部全局结构体的指针 (例如 &IMU_Data)
+ * @param size 数据结构体的大小
+ * @return 成功返回发布者句柄，失败返回 NULL
+ */
 Publisher_t* PubRegister(const char *name, void *external_ptr, size_t size) {
     if (external_ptr == NULL) return NULL;
     Real_Topic_t *t = Find_Or_Create_Topic(name, size);
@@ -79,11 +87,22 @@ Publisher_t* PubRegister(const char *name, void *external_ptr, size_t size) {
     return (Publisher_t*)t;
 }
 
+/**
+ * @brief 订阅消息频道
+ * @param name 想要订阅的消息频道名字
+ * @param size 预期的数据结构体大小
+ * @return 成功返回订阅者句柄，失败返回 NULL
+ */
 Subscriber_t* SubRegister(const char *name, size_t size) {
     // 订阅者如果先启动，先抢占格位，后续由 PubRegister 注入实体地址
     return (Subscriber_t*)Find_Or_Create_Topic(name, size);
 }
 
+/**
+ * @brief 推送/更新消息（任务中使用。注意：如果中断直接写了绑定内存，可不调用此函数）
+ * @param pub_handle 发布者句柄
+ * @param data 指向待推送的本地数据的指针
+ */
 void PubPushMessage(Publisher_t *pub_handle, const void *data) {
     Real_Topic_t *t = (Real_Topic_t*)pub_handle;
     if (t == NULL || data == NULL || t->data_ptr == NULL) return;
@@ -98,6 +117,11 @@ void PubPushMessage(Publisher_t *pub_handle, const void *data) {
     }
 }
 
+/**
+ * @brief 获取消息（应用层任务安全、高效率地获取最新数据）
+ * @param sub_handle 订阅者句柄
+ * @param buffer 本地接收变量的缓冲区指针
+ */
 void SubGetMessage(Subscriber_t *sub_handle, void *buffer) {
     Real_Topic_t *t = (Real_Topic_t*)sub_handle;
     if (t == NULL || buffer == NULL || t->data_ptr == NULL) return;
@@ -112,12 +136,16 @@ void SubGetMessage(Subscriber_t *sub_handle, void *buffer) {
     }
 }
 
+/**
+ * @brief 消息中心集中初始化
+ */
 void Message_Center_Init(void) {
     if (g_center_mutex == NULL) {
         g_center_mutex = osMutexNew(NULL);
     }
 
     PubRegister("dbus_data",  &DBUS,      sizeof(DBUS));
+    PubRegister("referee_data",  &Referee,      sizeof(Referee_Data_t));
     PubRegister("imu_data",   &IMU_Data,  sizeof(IMU_Data));
 
     PubRegister("chassis_motors", &chassis_motors, sizeof(Chassis_Motor_Group_t));

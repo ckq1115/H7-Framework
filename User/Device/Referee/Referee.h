@@ -17,67 +17,67 @@
 /* ==================== CMD ID ==================== */
 enum Read_Cmd_ID_Typdef
 {
-    game_state                 = 0x0001, /* 0x0001: 比赛状态数据，1Hz 周期发送 */
-    Match_results              = 0x0002, /* 0x0002: 比赛结果数据，比赛结束时触发发送 */
-    Robot_HP                   = 0x0003, /* 0x0003: 比赛机器人血量数据，3Hz 周期发送 */
-    Venue_Events               = 0x0101, /* 0x0101: 场地事件数据，1Hz 周期发送或状态改变时触发发送 */
-    Referee_warning            = 0x0104, /* 0x0104: 裁判系统警告数据，判罚发生时触发发送 */
-    Dart_fire                  = 0x0105, /* 0x0105: 飞镖发射相关数据，飞镖发射或击中目标时触发发送 */
-    Robot_performan            = 0x0201, /* 0x0201: 机器人性能体系数据，10Hz 周期发送 */
-    time_power                 = 0x0202, /* 0x0202: 实时功率热量数据，50Hz 周期发送 */
-    Robot_location             = 0x0203, /* 0x0203: 机器人位置数据，10Hz 周期发送 */
-    Robot_buff                 = 0x0204, /* 0x0204: 机器人增益和底盘能量数据，3Hz 周期发送 */
-    Damage_status              = 0x0206, /* 0x0206: 伤害状态数据，受到伤害时触发发送 */
-    time_shooting              = 0x0207, /* 0x0207: 实时射击数据，弹丸发射后触发发送 */
-    Allowable_ammo             = 0x0208, /* 0x0208: 允许发弹量/弹丸剩余量数据，10Hz 周期发送 */
-    RFID_status                = 0x0209, /* 0x0209: 机器人 RFID 模块状态数据，3Hz 周期发送 */
-    Dart_directives            = 0x020A, /* 0x020A: 飞镖机器人客户端指令数据，10Hz 周期发送 */
-    Ground_location            = 0x020B, /* 0x020B: 地面机器人位置数据，1Hz 周期发送（仅供空中/雷达机器人接收） */
-    Radar_Marking              = 0x020C, /* 0x020C: 雷达标记进度数据，1Hz 周期发送（仅供雷达机器人接收） */
-    Route_Informat             = 0x020D, /* 0x020D: 哨兵自主决策信息同步数据，1Hz 周期发送 */
-    Radar_Informat             = 0x020E, /* 0x020E: 雷达自主决策信息同步数据，1Hz 周期发送 */
+    game_state                 = 0x0001, /* 0x0001: 比赛状态数据，固定以1Hz频率发送 */
+    Match_results              = 0x0002, /* 0x0002: 比赛结果数据，比赛结束触发发送 */
+    Robot_HP                   = 0x0003, /* 0x0003: 机器人血量数据，固定以3Hz频率发送 */
+    Venue_Events               = 0x0101, /* 0x0101: 场地事件数据，固定以1Hz频率发送 */
+    Referee_warning            = 0x0104, /* 0x0104: 裁判警告数据，己方判罚/判负时触发发送，其余时间以1Hz频率发送 */
+    Dart_fire                  = 0x0105, /* 0x0105: 飞镖发射相关数据，固定以1Hz频率发送 */
+    Robot_performan            = 0x0201, /* 0x0201: 机器人性能体系数据，固定以10Hz频率发送 */
+    time_power                 = 0x0202, /* 0x0202: 实时底盘缓冲能量和射击热量数据，固定以10Hz频率发送 */
+    Robot_location             = 0x0203, /* 0x0203: 机器人位置数据，固定以1Hz频率发送 */
+    Robot_buff                 = 0x0204, /* 0x0204: 机器人增益和底盘能量数据，固定以3Hz频率发送 */
+    Damage_status              = 0x0206, /* 0x0206: 伤害状态数据，伤害发生后发送 */
+    time_shooting              = 0x0207, /* 0x0207: 实时射击数据，弹丸发射后发送 */
+    Allowable_ammo             = 0x0208, /* 0x0208: 允许发弹量，固定以10Hz频率发送 */
+    RFID_status                = 0x0209, /* 0x0209: 机器人 RFID 模块状态，固定以3Hz频率发送 */
+    Dart_directives            = 0x020A, /* 0x020A: 飞镖选手端指令数据，固定以3Hz频率发送 */
+    Ground_location            = 0x020B, /* 0x020B: 地面机器人位置数据，固定以1Hz频率发送 */
+    Radar_Marking              = 0x020C, /* 0x020C: 雷达标记进度数据，固定以1Hz频率发送 */
+    Route_Informat             = 0x020D, /* 0x020D: 哨兵自主决策信息同步，固定以1Hz频率发送 */
+    Radar_Informat             = 0x020E, /* 0x020E: 雷达自主决策信息同步，固定以1Hz频率发送 */
 
-    Robot_Interaction          = 0x0301, /* 0x0301: 机器人交互数据（多机战术通信/UI图形绘制），上限 30Hz 触发发送 */
-    Custom_controller_to_robot = 0x0302, /* 0x0302: 自定义控制器向机器人发送交互数据，上限 30Hz 触发发送 */
-    Minimap                    = 0x0303, /* 0x0303: 选手端小地图交互数据（双击/点击下发），选手端触发发送 */
-    Map_receive_radar          = 0x0305, /* 0x0305: 选手端小地图接收雷达/哨兵下发的目标点/标定坐标，上限 10Hz 触发发送 */
-    Custom_controller_to_map   = 0x0306, /* 0x0306: 自定义控制器键鼠操作数据（发给选手端小地图/自定义客户端），上限 30Hz */
-    Map_receive_path           = 0x0307, /* 0x0307: 选手端接收路径数据（通常由云台/底盘自主导航下发），上限 10Hz */
-    Map_receive_robot_info     = 0x0308, /* 0x0308: 选手端接收选手及机器人专属信息数据，上限 1Hz 触发发送 */
-    Robot_to_custom_controller = 0x0309, /* 0x0309: 机器人向自定义控制器发送交互数据，上限 30Hz 触发发送 */
-    Robot_to_custom_client     = 0x0310, /* 0x0310: 机器人向自定义客户端（选手端）发送交互数据，上限 50Hz 发送 */
-    Custom_client_to_robot     = 0x0311  /* 0x0311: 自定义客户端（选手端）向机器人发送交互数据，上限 20Hz 发送 */
+    Robot_Interaction          = 0x0301, /* 0x0301: 机器人交互数据，发送方触发发送，频率上限为30Hz */
+    Custom_controller_to_robot = 0x0302, /* 0x0302: 自定义控制器与机器人交互数据，发送方触发发送，频率上限为30Hz */
+    Minimap                    = 0x0303, /* 0x0303: 选手端小地图交互数据，选手端触发发送 */
+    Map_receive_radar          = 0x0305, /* 0x0305: 选手端小地图接收雷达数据，频率上限为5Hz */
+    Custom_controller_to_map   = 0x0306, /* 0x0306: 自定义控制器与选手端交互数据，发送方触发发送，频率上限为30Hz */
+    Map_receive_path           = 0x0307, /* 0x0307: 选手端小地图接收路径数据，频率上限为1Hz */
+    Map_receive_robot_info     = 0x0308, /* 0x0308: 选手端小地图接收机器人数据，频率上限为3Hz */
+    Robot_to_custom_controller = 0x0309, /* 0x0309: 自定义控制器接收机器人数据，频率上限为10Hz */
+    Robot_to_custom_client     = 0x0310, /* 0x0310: 机器人发送给自定义客户端的数据，频率上限为50Hz */
+    Custom_client_to_robot     = 0x0311  /* 0x0311: 自定义客户端发送给机器人的自定义指令，频率上限为75Hz */
 };
 
 typedef struct __packed
 {
-    uint8_t  SOF;         /* 帧头标志，固定为 0xA5 */
-    uint16_t DataLenth;   /* 数据帧中 data 段的长度 */
+    uint8_t  SOF;         /* 数据帧起始字节,固定值为0xA5 */
+    uint16_t DataLenth;   /* 数据帧中 data 的长度 */
     uint8_t  Seq;         /* 包序号 */
-    uint8_t  CRC8;        /* 帧头部分（前 4 字节）的 CRC8 校验值 */
+    uint8_t  CRC8;        /* 帧头 CRC8 校验 */
 } frame_header_R_Typdef;
 
 typedef struct __packed
 {
-    uint8_t game_type : 4;         /* 比赛类型：1-RMUC, 2-RMUT, 3-RMUA, 4-RMUL */
-    uint8_t game_progress : 4;     /* 比赛阶段：0-未开始, 1-准备阶段, 2-自检阶段, 3-5s倒计时, 4-比赛中, 5-比赛结束 */
-    uint16_t stage_remain_time;    /* 当前比赛阶段剩余时间（单位：秒） */
-    uint64_t SyncTimeStamp;        /* 机器人时间同步时间戳（单位：毫秒） */
+    uint8_t game_type : 4;         /* bit 0-3:比赛类型。1: RoboMaster 机甲大师超级对抗赛, 2: RoboMaster 机甲大师高校单项赛, 3: ICRA RoboMaster 高校人工智能挑战赛, 4: RoboMaster 机甲大师高校联盟赛3V3对抗, 5: RoboMaster 机甲大师高校联盟赛步兵对抗 */
+    uint8_t game_progress : 4;     /* bit 4-7:当前比赛阶段。0:未开始比赛, 1:准备阶段, 2:十五秒裁判系统自检阶段, 3: 五秒倒计时, 4:比赛中, 5:比赛结算中 */
+    uint16_t stage_remain_time;    /* 当前阶段剩余时间,单位:秒 */
+    uint64_t SyncTimeStamp;        /* UNIX时间,当机器人正确连接到裁判系统的NTP服务器后生效 */
 } game_status_t;
 
 typedef struct __packed
 {
-    uint8_t winner;                /* 获胜队伍：0-平局, 1-红方胜, 2-蓝方胜 */
+    uint8_t winner;                /* 0:平局, 1:红方胜利, 2:蓝方胜利 */
 } game_result_t;
 
 typedef struct __packed
 {
-    uint16_t ally_1_robot_HP;      /* 己方 1 号英雄机器人血量 */
-    uint16_t ally_2_robot_HP;      /* 己方 2 号工程机器人血量 */
-    uint16_t ally_3_robot_HP;      /* 己方 3 号步兵机器人血量 */
-    uint16_t ally_4_robot_HP;      /* 己方 4 号步兵机器人血量 */
-    uint16_t reserved;             /* 保留未定义字段 */
-    uint16_t ally_7_robot_HP;      /* 己方 7 号哨兵机器人血量 */
+    uint16_t ally_1_robot_HP;      /* 己方1号英雄机器人血量,若该机器人未上场或者被罚下,则血量为0,下文同理 */
+    uint16_t ally_2_robot_HP;      /* 己方2号工程机器人血量 */
+    uint16_t ally_3_robot_HP;      /* 己方3号步兵机器人血量 */
+    uint16_t ally_4_robot_HP;      /* 己方4号步兵机器人血量 */
+    uint16_t reserved;             /* 保留位 */
+    uint16_t ally_7_robot_HP;      /* 己方7号哨兵机器人血量 */
     uint16_t ally_outpost_HP;      /* 己方前哨站血量 */
     uint16_t ally_base_HP;         /* 己方基地血量 */
 } game_robot_HP_t;
@@ -85,407 +85,403 @@ typedef struct __packed
 /* 0x0101 场地事件数据 */
 typedef struct __packed
 {
-    uint32_t supply_zone_status : 1;                 // bit 0: 己方补给区的占领状态（0:未占领/无增益, 1:已占领/有增益）
-    uint32_t reserved_1 : 1;                         // bit 1: 保留位
-    uint32_t supply_zone_status_rmul : 1;            // bit 2: 己方补给区的占领状态 RMUL
-    uint32_t small_energy_mechanism_status : 2;      // bit 3-4: 己方小能量机关的激活状态（0:未激活, 1:正处于激活中, 2:已全部激活完成）
-    uint32_t big_energy_mechanism_status : 2;        // bit 5-6: 己方大能量机关的激活状态（0:未激活, 1:正处于激活中, 2:已全部激活完成）
-    uint32_t central_highland_status : 2;            // bit 7-8: 己方中央高地的占领状态（0:未占领, 1:已占领, 2:被抢占中）
-    uint32_t trapezoidal_highland_status : 2;        // bit 9-10: 己方梯形高地的占领状态
-    uint32_t dart_hit_time : 9;                      // bit 11-19: 对方飞镖最后击中己方前哨站或基地的时间（倒计时秒数）
-    uint32_t dart_hit_target : 3;                    // bit 20-22: 对方飞镖最后击中的具体目标（0:未击中, 1:前哨站, 2:基地固定目标, 3:基地随机目标）
-    uint32_t center_buff_status : 2;                 // bit 23-24: 中心增益点的占领状态 RMUL
-    uint32_t fortress_buff_status : 2;               // bit 25-26: 己方堡垒增益点的占领状态（0:未占领, 1:已占领）
-    uint32_t outpost_buff_status : 2;                // bit 27-28: 己方前哨站增益点的占领状态
-    uint32_t base_buff_status : 1;                   // bit 29: 己方基地增益点的占领状态
-    uint32_t reserved_2 : 2;                         // bit 30-31: 保留位
+    uint32_t supply_zone_status : 1;                 /* bit 0:己方补给区的占领状态,1为已占领 */
+    uint32_t reserved_1 : 1;                         /* bit 1:保留位 */
+    uint32_t supply_zone_status_rmul : 1;            /* bit 2:己方补给区的占领状态,1为已占领(仅RMUL适用) */
+    uint32_t small_energy_mechanism_status : 2;      /* bit 3-4:己方小能量机关的激活状态,0为未激活,1为已激活,2为正在激活 */
+    uint32_t big_energy_mechanism_status : 2;        /* bit 5-6:己方大能量机关的激活状态,0为未激活,1为已激活,2为正在激活 */
+    uint32_t central_highland_status : 2;            /* bit 7-8:己方中央高地的占领状态,1为被己方占领,2为被对方占领 */
+    uint32_t trapezoidal_highland_status : 2;        /* bit 9-10:己方梯形高地的占领状态,1为已占领 */
+    uint32_t dart_hit_time : 9;                      /* bit 11-19:对方飞镖最后一次击中己方前哨站或基地的时间(0-420, 开局默认为0) */
+    uint32_t dart_hit_target : 3;                    /* bit 20-22:对方飞镖最后一次击中己方前哨站或基地的具体目标,开局默认为0,1为击中前哨站,2为击中基地固定目标,3为击中基地随机固定目标,4为击中基地随机移动目标,5为击中基地末端移动目标 */
+    uint32_t center_buff_status : 2;                 /* bit 23-24:中心增益点的占领状态,0为未被占领,1为被己方占领,2为被对方占领,3为被双方占领。(仅RMUL适用) */
+    uint32_t fortress_buff_status : 2;               /* bit 25-26:己方堡垒增益点的占领状态,0为未被占领,1为被己方占领,2为被对方占领,3为被双方占领 */
+    uint32_t outpost_buff_status : 2;                /* bit 27-28:己方前哨站增益点的占领状态,0为未被占领,1为被己方占领,2为被对方占领 */
+    uint32_t base_buff_status : 1;                   /* bit 29:己方基地增益点的占领状态,1为已占领 */
+    uint32_t reserved_2 : 2;                         /* bit 30-31:保留位 */
 } event_data_t;
 
 typedef struct __packed
 {
-    uint8_t level;                  /* 判罚警告等级：1-黄牌, 2-红牌, 3-直接判负 */
-    uint8_t offending_robot_id;     /* 违规犯规机器人的 ID，无目标机器人时为 0 */
-    uint8_t count;                  /* 触发同一违规等级判罚的累计次数 */
+    uint8_t level;                  /* 己方最后一次受到判罚的等级: 1:双方黄牌 2:黄牌 3:红牌 4:判负 */
+    uint8_t offending_robot_id;     /* 己方最后一次受到判罚的违规机器人ID(判负和双方黄牌时,该值为0) */
+    uint8_t count;                  /* 己方最后一次受到判罚的违规机器人对应判罚等级的违规次数(开局默认为0) */
 } referee_warning_t;
 
 /* 0x0105 飞镖发射相关数据 */
 typedef struct __packed
 {
-    uint8_t dart_remaining_time;        /* 飞镖发射引导剩余倒计时（单位：秒） */
-    uint16_t dart_hit_target : 3;       // bit 0-2: 最近一次己方飞镖击中的目标
-    uint16_t dart_hit_count : 3;        // bit 3-5: 对方最近被击中的目标累计被击中总计次数
-    uint16_t dart_selected_target : 3;  // bit 6-8: 飞镖此时在系统端选定的击打目标
-    uint16_t reserved : 7;              // bit 9-15: 保留位
+    uint8_t dart_remaining_time;        /* 己方飞镖发射剩余时间,单位:秒 */
+    uint16_t dart_hit_target : 3;       /* bit 0-2:最近一次己方飞镖击中的目标,开局默认为0,1为击中前哨站,2为击中基地固定目标,3为击中基地随机固定目标,4为击中基地随机移动目标,5为击中基地末端移动目标 */
+    uint16_t dart_hit_count : 3;        /* bit 3-5:对方最近被击中的目标累计被击中计次数,开局默认为0,至多为4 */
+    uint16_t dart_selected_target : 3;  /* bit 6-8:飞镖此时选定的击打目标,开局默认或未选定/选定前哨站时为0,选中基地固定目标为1,选中基地随机固定目标为2,选中基地随机移动目标为3,选中基地末端移动目标为4 */
+    uint16_t reserved : 7;              /* bit 9-15:保留 */
 } dart_info_t;
 
 /* 0x0201 机器人性能体系数据 */
 typedef struct __packed
 {
-    uint8_t robot_id;                            /* 本机器人的专属 ID（如红1为1，蓝1为101） */
-    uint8_t robot_level;                         /* 机器人当前等级：1级, 2级, 3级等等 */
-    uint16_t current_HP;                         /* 机器人当前实时血量 */
-    uint16_t maximum_HP;                         /* 机器人当前等级对应的最大血量上限 */
-    uint16_t shooter_barrel_cooling_value;       /* 机器人发射机构枪口每秒冷却值 */
-    uint16_t shooter_barrel_heat_limit;          /* 机器人当前枪口热量上限值 */
-    uint16_t chassis_power_limit;                /* 机器人当前底盘限制的最大功率上限值（W） */
-    uint8_t power_management_gimbal_output : 1;  /* 云台电源输出状态：0-关闭, 1-开启 */
-    uint8_t power_management_chassis_output : 1; /* 底盘电源输出状态：0-关闭, 1-开启 */
-    uint8_t power_management_shooter_output : 1; /* 发射机构电源输出状态：0-关闭, 1-开启 */
-    uint8_t reserved_power_management : 5;       /* 补齐一个字节，防止错位 */
+    uint8_t robot_id;                            /* 本机器人 ID */
+    uint8_t robot_level;                         /* 机器人等级 */
+    uint16_t current_HP;                         /* 机器人当前血量 */
+    uint16_t maximum_HP;                         /* 机器人血量上限 */
+    uint16_t shooter_barrel_cooling_value;       /* 机器人射击热量每秒冷却值 */
+    uint16_t shooter_barrel_heat_limit;          /* 机器人射击热量上限 */
+    uint16_t chassis_power_limit;                /* 机器人底盘功率上限 */
+    uint8_t power_management_gimbal_output : 1;  /* bit 0: gimbal 输出,0为无输出,1为24V输出 */
+    uint8_t power_management_chassis_output : 1; /* bit 1: chassis 口输出,0为无输出,1为24V输出 */
+    uint8_t power_management_shooter_output : 1; /* bit 2: shooter 口输出,0为无输出,1为24V 输出 */
+    uint8_t reserved_power_management : 5;
 } robot_status_t;
 
 typedef struct __packed
 {
-    uint16_t reserved_1;                         /* 历史底盘电压保留位 */
-    uint16_t reserved_2;                         /* 历史底盘电流保留位 */
-    float reserved_3;                            /* 历史底盘功率保留位 */
-    uint16_t buffer_energy;                      /* 机器人当前底盘缓冲能量（焦耳 J） */
-    uint16_t shooter_17mm_barrel_heat;           /* 机器人 17mm 枪口实时热量值 */
-    uint16_t shooter_42mm_barrel_heat;           /* 机器人 42mm 枪口实时热量值 */
+    uint16_t reserved_1;                         /* 保留位 */
+    uint16_t reserved_2;                         /* 保留位 */
+    float reserved_3;                            /* 保留位 */
+    uint16_t buffer_energy;                      /* 缓冲能量(单位:J) */
+    uint16_t shooter_17mm_barrel_heat;           /* 17mm 发射机构的射击热量 */
+    uint16_t shooter_42mm_barrel_heat;           /* 42mm 发射机构的射击热量 */
 } power_heat_data_t;
 
 typedef struct __packed
 {
-    float x;                                     /* 机器人当前的全局定位坐标 X 轴位置（单位：米） */
-    float y;                                     /* 机器人当前的全局定位坐标 Y 轴位置（单位：米） */
-    float angle;                                 /* 机器人当前的枪口/底盘朝向偏航角（单位：度，范围0~360°） */
+    float x;                                     /* 本机器人位置x坐标,单位:m */
+    float y;                                     /* 本机器人位置y坐标,单位:m */
+    float angle;                                 /* 本机器人测速模块的朝向,单位:度,正北为0度 */
 } robot_pos_t;
 
 /* 0x0204 机器人增益和底盘能量数据 */
 typedef struct __packed
 {
-    uint8_t recovery_buff;                       /* 机器人实时回血增益（数值代表每秒回血百分比） */
-    uint16_t cooling_buff;                       /* 枪口冷却增益（数值代表枪口冷却倍数） */
-    uint8_t defence_buff;                        /* 防御增益（百分比，减少受到的外部伤害数值） */
-    uint8_t vulnerability_buff;                  /* 负面易伤增益状态（增加受到的外部伤害数值） */
-    uint16_t attack_buff;                        /* 攻击力增益（百分比） */
-    uint8_t energy_125 : 1;                      // bit 0: 底盘剩余能量是否 >=125%
-    uint8_t energy_100 : 1;                      // bit 1: 底盘剩余能量是否 >=100%
-    uint8_t energy_50 : 1;                       // bit 2: 底盘剩余能量是否 >=50%
-    uint8_t energy_30 : 1;                       // bit 3: 底盘剩余能量是否 >=30%
-    uint8_t energy_15 : 1;                       // bit 4: 底盘剩余能量是否 >=15%
-    uint8_t energy_5 : 1;                        // bit 5: 底盘剩余能量是否 >=5%
-    uint8_t energy_1 : 1;                        // bit 6: 底盘剩余能量是否 >=1%
-    uint8_t energy_reserved : 1;                 // bit 7: 底盘能量状态位保留
+    uint8_t recovery_buff;                       /* 机器人回血增益(百分比,值为10表示每秒恢复血量上限的10%) */
+    uint16_t cooling_buff;                       /* 机器人射击热量冷却增益具体值(直接值,值为x表示热量冷却增加x/s) */
+    uint8_t defence_buff;                        /* 机器人防御增益(百分比,值为50表示50%防御增益) */
+    uint8_t vulnerability_buff;                  /* 机器人负防御增益(百分比,值为30表示-30%防御增益) */
+    uint16_t attack_buff;                        /* 机器人攻击增益(百分比,值为50表示50%攻击增益) */
+    uint8_t energy_125 : 1;                      /* bit 0:在剩余能量≥125%时为1,其余情况为0 */
+    uint8_t energy_100 : 1;                      /* bit 1:在剩余能量≥100%时为1,其余情况为0 */
+    uint8_t energy_50 : 1;                       /* bit 2:在剩余能量≥50%时为1,其余情况为0 */
+    uint8_t energy_30 : 1;                       /* bit 3:在剩余能量≥30%时为1,其余情况为0 */
+    uint8_t energy_15 : 1;                       /* bit 4:在剩余能量≥15%时为1,其余情况为0 */
+    uint8_t energy_5 : 1;                        /* bit 5:在剩余能量≥5%时为1,其余情况为0 */
+    uint8_t energy_1 : 1;                        /* bit 6:在剩余能量≥1%时为1,其余情况为0 */
+    uint8_t energy_reserved : 1;
 } buff_t;
 
 typedef struct __packed
 {
-    uint8_t armor_id : 4;                        /* 受击装甲板 ID：0~4 代表对应位置装甲板编号 */
-    uint8_t HP_deduction_reason : 4;             /* 扣血原因：0-装甲受弹丸攻击, 1-装甲模块或超级电容管理模块离线 , 5-装甲模块受到撞击  */
+    uint8_t armor_id : 4;                        /* bit 0-3:当扣血原因为装甲模块被弾丸攻击、受撞击或离线时,该4 bit组成的数值为装甲模块或测速模块的ID编号;当其他原因导致扣血时,该数值为0 */
+    uint8_t HP_deduction_reason : 4;             /* bit 4-7:血量变化类型。0:装甲模块被弹丸攻击导致扣血, 1:装甲模块或超级电容管理模块离线导致扣血, 5:装甲模块受到撞击导致扣血 */
 } hurt_data_t;
 
 /* 0x0207 实时射击数据 */
 typedef struct __packed
 {
-    uint8_t reserved_1 : 1;                      // bit 0: 保留位
-    uint8_t bullet_type_17mm : 1;                // bit 1: 发射弹丸为 17mm 弹丸
-    uint8_t bullet_type_42mm : 1;                // bit 2: 发射弹丸为 42mm 弹丸
-    uint8_t reserved_2 : 5;                      // bit 3-7: 保留位
-    uint8_t shooter_number;                      /* 发射机构编号：1-17mm发射机构1, 2-17mm发射机构2, 3-42mm发射机构 */
-    uint8_t launching_frequency;                 /* 实时射频：当前射击弹丸的发射频率（Hz） */
-    float initial_speed;                         /* 弹丸发射初速度（单位：m/s） */
+    uint8_t reserved_1 : 1;
+    uint8_t bullet_type_17mm : 1;                /* bit 1: 17mm 弹丸 */
+    uint8_t bullet_type_42mm : 1;                /* bit 2: 42mm 弹丸 */
+    uint8_t reserved_2 : 5;
+    uint8_t shooter_number;                      /* 发射机构 ID: 1:17mm 发射机构, 2:保留位, 3:42mm 发射机构 */
+    uint8_t launching_frequency;                 /* 弹丸射速(单位:Hz) */
+    float initial_speed;                         /* 弹丸初速度(单位:m/s) */
 } shoot_data_t;
 
 typedef struct __packed
 {
-    uint16_t projectile_allowance_17mm;          /* 17mm 弹丸的剩余允许发弹量 */
-    uint16_t projectile_allowance_42mm;          /* 42mm 弹丸的剩余允许发弹量 */
+    uint16_t projectile_allowance_17mm;          /* 机器人自身拥有的17mm弹丸允许发弹量 */
+    uint16_t projectile_allowance_42mm;          /* 42mm 弹丸允许发弹量 */
     uint16_t remaining_gold_coin;                /* 剩余金币数量 */
-    uint16_t projectile_allowance_fortress;      /* 堡垒增益点提供的储备17mm弹丸允许发弹量 */
+    uint16_t projectile_allowance_fortress;      /* 堡垒增益点提供的储备17mm弹丸允许发弹量;该值与机器人是否实际占领堡垒无关 */
 } projectile_allowance_t;
 
 /* 0x0209 机器人 RFID 模块状态 */
 typedef struct __packed
 {
-    // 32-bit (uint32_t rfid_status 展开)
-    uint32_t ally_base : 1;                      /* bit 0: 是否处于己方基地 RFID 增益点 */
-    uint32_t ally_central_highland : 1;          /* bit 1: 是否处于己方中央高地 RFID 增益点 */
-    uint32_t enemy_central_highland : 1;         /* bit 2: 是否处于对方中央高地 RFID 增益点 */
-    uint32_t ally_trapezoidal_highland : 1;      /* bit 3: 是否处于己方梯形高地 RFID 增益点 */
-    uint32_t enemy_trapezoidal_highland : 1;     /* bit 4: 是否处于对方梯形高地 RFID 增益点 */
-    uint32_t ally_fly_ramp_front : 1;            /* bit 5: 是否处于己方飞坡前方 RFID 点 */
-    uint32_t ally_fly_ramp_back : 1;             /* bit 6: 是否处于己方飞坡后方 RFID 点 */
-    uint32_t enemy_fly_ramp_front : 1;           /* bit 7: 是否处于对方飞坡前方 RFID 点 */
-    uint32_t enemy_fly_ramp_back : 1;            /* bit 8: 是否处于对方飞坡后方 RFID 点 */
-    uint32_t ally_central_highland_lower : 1;    /* bit 9: 是否处于己方中央高地低区 RFID 点 */
-    uint32_t ally_central_highland_upper : 1;    /* bit 10: 是否处于己方中央高地高区 RFID 点 */
-    uint32_t enemy_central_highland_lower : 1;   /* bit 11: 是否处于对方中央高地低区 RFID 点 */
-    uint32_t enemy_central_highland_upper : 1;   /* bit 12: 是否处于对方中央高地高区 RFID 点 */
-    uint32_t ally_highway_lower : 1;             /* bit 13: 是否处于己方公路低区 RFID 点 */
-    uint32_t ally_highway_upper : 1;             /* bit 14: 是否处于己方公路高区 RFID 点 */
-    uint32_t enemy_highway_lower : 1;            /* bit 15: 是否处于对方公路低区 RFID 点 */
-    uint32_t enemy_highway_upper : 1;            /* bit 16: 是否处于对方公路高区 RFID 点 */
-    uint32_t ally_fortress : 1;                  /* bit 17: 是否处于己方堡垒增益点 RFID */
-    uint32_t ally_outpost : 1;                   /* bit 18: 是否处于己方前哨站增益点 RFID */
-    uint32_t ally_supply_zone_not_overlapping : 1;/* bit 19: 是否处于己方补给区非重叠区域 RFID */
-    uint32_t ally_supply_zone_overlapping : 1;   /* bit 20: 是否处于己方补给区重叠区域 RFID */
-    uint32_t ally_assembly_zone : 1;             /* bit 21: 是否处于己方入场复活/集结区 RFID */
-    uint32_t enemy_assembly_zone : 1;            /* bit 22: 是否处于对方入场复活/集结区 RFID */
-    uint32_t center_buff_zone : 1;               /* bit 23: 是否处于中心增益区 RFID RMUL */
-    uint32_t enemy_fortress : 1;                 /* bit 24: 是否处于对方堡垒增益点 RFID */
-    uint32_t enemy_outpost : 1;                  /* bit 25: 是否处于对方前哨站增益点 RFID */
-    uint32_t ally_tunnel_highway_lower : 1;      /* bit 26: 是否处于己方隧道公路低区 RFID */
-    uint32_t ally_tunnel_highway_middle : 1;     /* bit 27: 是否处于己方隧道公路中区 RFID */
-    uint32_t ally_tunnel_highway_upper : 1;      /* bit 28: 是否处于己方隧道公路高区 RFID */
-    uint32_t ally_tunnel_trapezoidal_lower : 1;  /* bit 29: 是否处于己方隧道梯形低区 RFID */
-    uint32_t ally_tunnel_trapezoidal_middle : 1; /* bit 30: 是否处于己方隧道梯形中区 RFID */
-    uint32_t ally_tunnel_trapezoidal_upper : 1;  /* bit 31: 是否处于己方隧道梯形高区 RFID */
+    uint32_t ally_base : 1;                      /* bit 0:己方基地增益点 */
+    uint32_t ally_central_highland : 1;          /* bit 1:己方中央高地增益点 */
+    uint32_t enemy_central_highland : 1;         /* bit 2:对方中央高地增益点 */
+    uint32_t ally_trapezoidal_highland : 1;      /* bit 3:己方梯形高地增益点 */
+    uint32_t enemy_trapezoidal_highland : 1;     /* bit 4:对方梯形高地增益点 */
+    uint32_t ally_fly_ramp_front : 1;            /* bit 5:己方地形跨越增益点(飞坡)(靠近己方一侧飞坡前) */
+    uint32_t ally_fly_ramp_back : 1;             /* bit 6:己方地形跨越增益点(飞坡)(靠近己方一侧飞坡后) */
+    uint32_t enemy_fly_ramp_front : 1;           /* bit 7:对方地形跨越增益点(飞坡)(靠近对方一侧飞坡前) */
+    uint32_t enemy_fly_ramp_back : 1;            /* bit 8:对方地形跨越增益点(飞坡)(靠近对方一侧飞坡后) */
+    uint32_t ally_central_highland_lower : 1;    /* bit 9:己方地形跨越增益点(中央高地下方) */
+    uint32_t ally_central_highland_upper : 1;    /* bit 10:己方地形跨越增益点(中央高地上方) */
+    uint32_t enemy_central_highland_lower : 1;   /* bit 11:对方地形跨越增益点(中央高地下方) */
+    uint32_t enemy_central_highland_upper : 1;   /* bit 12:对方地形跨越增益点(中央高地上方) */
+    uint32_t ally_highway_lower : 1;             /* bit 13:己方地形跨越增益点(公路下方) */
+    uint32_t ally_highway_upper : 1;             /* bit 14:己方地形跨越增益点(公路上方) */
+    uint32_t enemy_highway_lower : 1;            /* bit 15:对方地形跨越增益点(公路下方) */
+    uint32_t enemy_highway_upper : 1;            /* bit 16:对方地形跨越增益点(公路上方) */
+    uint32_t ally_fortress : 1;                  /* bit 17:己方堡垒增益点 */
+    uint32_t ally_outpost : 1;                   /* bit 18:己方前哨站增益点 */
+    uint32_t ally_supply_zone_not_overlapping : 1;/* bit 19:己方与资源区不重叠的补给区/RMUL补给区 */
+    uint32_t ally_supply_zone_overlapping : 1;   /* bit 20:己方与资源区重叠的补给区 */
+    uint32_t ally_assembly_zone : 1;             /* bit 21:己方装配增益点 */
+    uint32_t enemy_assembly_zone : 1;            /* bit 22:对方装配增益点 */
+    uint32_t center_buff_zone : 1;               /* bit 23:中心增益点(仅RMUL适用) */
+    uint32_t enemy_fortress : 1;                 /* bit 24:对方堡垒增益点 */
+    uint32_t enemy_outpost : 1;                  /* bit 25:对方前哨站增益点 */
+    uint32_t ally_tunnel_highway_lower : 1;      /* bit 26:己方地形跨越增益点(隧道)(靠近己方一侧公路区下方) */
+    uint32_t ally_tunnel_highway_middle : 1;     /* bit 27:己方地形跨越增益点(隧道)(靠近己方一侧公路区中间) */
+    uint32_t ally_tunnel_highway_upper : 1;      /* bit 28:己方地形跨越增益点(隧道)(靠近己方一侧公路区上方) */
+    uint32_t ally_tunnel_trapezoidal_lower : 1;  /* bit 29:己方地形跨越增益点(隧道)(靠近己方梯形高地较低处) */
+    uint32_t ally_tunnel_trapezoidal_middle : 1; /* bit 30:己方地形跨越增益点(隧道)(靠近己方梯形高地较中间) */
+    uint32_t ally_tunnel_trapezoidal_upper : 1;  /* bit 31:己方地形跨越增益点(隧道)(靠近己方梯形高地较高处) */
 
-    // 8-bit (uint8_t rfid_status_2 展开)
-    uint8_t enemy_tunnel_highway_lower : 1;      /* bit 0: 是否处于对方隧道公路低区 RFID */
-    uint8_t enemy_tunnel_highway_middle : 1;     /* bit 1: 是否处于对方隧道公路中区 RFID */
-    uint8_t enemy_tunnel_highway_upper : 1;      /* bit 2: 是否处于对方隧道公路高区 RFID */
-    uint8_t enemy_tunnel_trapezoidal_lower : 1;  /* bit 3: 是否处于对方隧道梯形低区 RFID */
-    uint8_t enemy_tunnel_trapezoidal_middle : 1; /* bit 4: 是否处于对方隧道梯形中区 RFID */
-    uint8_t enemy_tunnel_trapezoidal_upper : 1;  /* bit 5: 是否处于对方隧道梯形高区 RFID */
-    uint8_t reserved_tunnel : 2;                 /* bit 6-7: 隧道位置标志保留位 */
+    uint8_t enemy_tunnel_highway_lower : 1;      /* bit 0:对方地形跨越增益点(隧道)(靠近对方公路一侧下方) */
+    uint8_t enemy_tunnel_highway_middle : 1;     /* bit 1:对方地形跨越增益点(隧道)(靠近对方公路一侧中间) */
+    uint8_t enemy_tunnel_highway_upper : 1;      /* bit 2:对方地形跨越增益点(隧道)(靠近对方公路一侧上方) */
+    uint8_t enemy_tunnel_trapezoidal_lower : 1;  /* bit 3:对方地形跨越增益点(隧道)(靠近对方梯形高地较低处) */
+    uint8_t enemy_tunnel_trapezoidal_middle : 1; /* bit 4:对方地形跨越增益点(隧道)(靠近对方梯形高地较中间) */
+    uint8_t enemy_tunnel_trapezoidal_upper : 1;  /* bit 5:对方地形跨越增益点(隧道)(靠近对方梯形高地较高处) */
+    uint8_t reserved_tunnel : 2;
 } rfid_status_t;
 
 typedef struct __packed
 {
-    uint8_t dart_launch_opening_status;          /* 飞镖发射站闸门的开启状态（0:关闭, 1:开启） */
-    uint8_t reserved;                            /* 保留未定义字段 */
-    uint16_t target_change_time;                 /* 切换飞镖打击目标对应的比赛剩余时间（单位：秒） */
-    uint16_t latest_launch_cmd_time;             /* 最近一次接收到发射飞镖指令对应的比赛剩余时间 */
+    uint8_t dart_launch_opening_status;          /* 当前飞镖发射站的状态: 1:关闭, 2:正在开启或者关闭中, 0:已经开启 */
+    uint8_t reserved;                            /* 保留位 */
+    uint16_t target_change_time;                 /* 切换击打目标时的比赛剩余时间,单位:秒,无/未切换动作,默认为0 */
+    uint16_t latest_launch_cmd_time;             /* 最后一次操作手确定发射指令时的比赛剩余时间,单位:秒,初始值为0 */
 } dart_client_cmd_t;
 
 typedef struct __packed
 {
-    float hero_x;                                /* 己方 1 号英雄机器人当前的地图横坐标位置 */
-    float hero_y;                                /* 己方 1 号英雄机器人当前的地图纵坐标位置 */
-    float engineer_x;                            /* 己方 2 号工程机器人当前的地图横坐标位置 */
-    float engineer_y;                            /* 己方 2 号工程机器人当前的地图纵坐标位置 */
-    float standard_3_x;                          /* 己方 3 号步兵机器人当前的地图横坐标位置 */
-    float standard_3_y;                          /* 己方 3 号步兵机器人当前的地图纵坐标位置 */
-    float standard_4_x;                          /* 己方 4 号步兵机器人当前的地图横坐标位置 */
-    float standard_4_y;                          /* 己方 4 号步兵机器人当前的地图纵坐标位置 */
-    float reserved_1;                            /* 位置同步预留变量 1 */
-    float reserved_2;                            /* 位置同步预留变量 2 */
+    float hero_x;                                /* 己方英雄机器人位置x轴坐标,单位:m */
+    float hero_y;                                /* 己方英雄机器人位置y轴坐标,单位:m */
+    float engineer_x;                            /* 己方工程机器人位置x轴坐标,单位:m */
+    float engineer_y;                            /* 己方工程机器人位置y轴坐标,单位:m */
+    float standard_3_x;                          /* 己方3号步兵机器人位置x轴坐标,单位:m */
+    float standard_3_y;                          /* 己方3号步兵机器人位置y轴坐标,单位:m */
+    float standard_4_x;                          /* 己方4号步兵机器人位置x轴坐标,单位:m */
+    float standard_4_y;                          /* 己方4号步兵机器人位置y轴坐标,单位:m */
+    float reserved_1;                            /* 保留位 */
+    float reserved_2;                            /* 保留位 */
 } ground_robot_position_t;
 
 /* 0x020C 雷达标记进度数据 */
 typedef struct __packed
 {
-    uint16_t enemy_hero_mark : 1;          // bit 0: 对方英雄机器人被我方标记的进度状态
-    uint16_t enemy_engineer_mark : 1;      // bit 1: 对方工程机器人被我方标记的进度状态
-    uint16_t enemy_infantry_3_mark : 1;    // bit 2: 对方 3 号步兵机器人被我方标记的进度状态
-    uint16_t enemy_infantry_4_mark : 1;    // bit 3: 对方 4 号步兵机器人被我方标记的进度状态
-    uint16_t enemy_aerial_mark : 1;        // bit 4: 对方空中机器人被我方标记的进度状态
-    uint16_t enemy_sentry_mark : 1;        // bit 5: 对方哨兵机器人被我方标记的进度状态
-    uint16_t ally_hero_mark : 1;           // bit 6: 己方英雄机器人被敌方标记的进度状态
-    uint16_t ally_engineer_mark : 1;       // bit 7: 己方工程机器人被敌方标记的进度状态
-    uint16_t ally_infantry_3_mark : 1;     // bit 8: 己方 3 号步兵机器人被敌方标记的进度状态
-    uint16_t ally_infantry_4_mark : 1;     // bit 9: 己方 4 号步兵机器人被敌方标记的进度状态
-    uint16_t ally_aerial_mark : 1;         // bit 10: 己方空中机器人被敌方标记的进度状态
-    uint16_t ally_sentry_mark : 1;         // bit 11: 己方哨兵机器人被敌方标记的进度状态
-    uint16_t reserved : 4;                 // bit 12-15: 雷达标记进度保留位
+    uint16_t enemy_hero_mark : 1;          /* bit 0:对方1号英雄机器人易伤情况 */
+    uint16_t enemy_engineer_mark : 1;      /* bit 1:对方2号工程机器人易伤情况 */
+    uint16_t enemy_infantry_3_mark : 1;    /* bit 2:对方3号步兵机器人易伤情况 */
+    uint16_t enemy_infantry_4_mark : 1;    /* bit 3:对方4号步兵机器人易伤情况 */
+    uint16_t enemy_aerial_mark : 1;        /* bit 4:对方空中机器人特殊标识情况 */
+    uint16_t enemy_sentry_mark : 1;        /* bit 5:对方哨兵机器人易伤情况 */
+    uint16_t ally_hero_mark : 1;           /* bit 6:己方1号英雄机器人特殊标识情况 */
+    uint16_t ally_engineer_mark : 1;       /* bit 7:己方2号工程机器人特殊标识情况 */
+    uint16_t ally_infantry_3_mark : 1;     /* bit 8:己方3号步兵机器人特殊标识情况 */
+    uint16_t ally_infantry_4_mark : 1;     /* bit 9:己方4号步兵机器人特殊标识情况 */
+    uint16_t ally_aerial_mark : 1;         /* bit 10:己方空中机器人特殊标识情况 */
+    uint16_t ally_sentry_mark : 1;         /* bit 11:己方哨兵机器人特殊标识情况 */
+    uint16_t reserved : 4;                 /* bit 12-15:保留位 */
 } radar_mark_data_t;
 
 /* 0x020D 哨兵自主决策信息同步 */
 typedef struct __packed
 {
-    // uint32_t sentry_info 展开
-    uint32_t sentry_redeemed_projectile_allowance : 11; /* bit 0-10: 哨兵已经远程兑换发弹量的总计数量 */
-    uint32_t sentry_remote_redeemed_projectile_times : 4;/* bit 11-14: 哨兵执行远程兑换发弹量的累计次数 */
-    uint32_t sentry_remote_redeemed_HP_times : 4;       /* bit 15-18: 哨兵执行远程兑换血量的累计次数 */
-    uint32_t can_confirm_free_revive : 1;               /* bit 19: 哨兵当前是否能进行免费复活的确认 */
-    uint32_t can_redeem_immediate_revive : 1;           /* bit 20: 哨兵当前是否符合消耗金币立即复活的条件 */
-    uint32_t cost_for_immediate_revive : 10;            /* bit 21-30: 哨兵当前若要立即复活所需消耗的金币代币数量 */
-    uint32_t reserved_1 : 1;                            /* bit 31: 决策同步信息保留位 1 */
+    uint32_t sentry_redeemed_projectile_allowance : 11; /* bit 0-10:除远程兑换外,哨兵机器人成功兑换的允许发弹量 */
+    uint32_t sentry_remote_redeemed_projectile_times : 4;/* bit 11-14:哨兵机器人成功远程兑换允许发弹量的次数 */
+    uint32_t sentry_remote_redeemed_HP_times : 4;       /* bit 15-18:哨兵机器人成功远程兑换血量的次数 */
+    uint32_t can_confirm_free_revive : 1;               /* bit 19:哨兵机器人当前是否可以确认免费复活,可以确认免费复活时值为1,否则为0 */
+    uint32_t can_redeem_immediate_revive : 1;           /* bit 20:哨兵机器人当前是否可以兑换立即复活,可以兑换立即复活时值为1,否则为0 */
+    uint32_t cost_for_immediate_revive : 10;            /* bit 21-30:哨兵机器人当前若兑换立即复活需要花费的金币数 */
+    uint32_t reserved_1 : 1;                            /* bit 31:保留 */
 
-    // uint16_t sentry_info_2 展开
-    uint16_t is_out_of_combat : 1;                       /* bit 0: 哨兵机器人当前是否处于脱离战斗状态 */
-    uint16_t remaining_redeemable_projectile_allowance : 11;/* bit 1-11: 哨兵当前阶段还允许购买/兑换的发弹量剩余余额 */
-    uint16_t sentry_posture : 2;                         /* bit 12-13: 哨兵当前战术姿态（如 0-常规开火, 1-防御等） */
-    uint16_t can_enter_activating_state : 1;             /* bit 14: 哨兵当前是否能切入能量机关激活准备状态 */
-    uint16_t reserved_2 : 1;                             /* bit 15: 决策同步信息保留位 2 */
+    uint16_t is_out_of_combat : 1;                       /* bit 0:哨兵当前是否处于脱战状态,处于脱战状态时为1,否则为0 */
+    uint16_t remaining_redeemable_projectile_allowance : 11;/* bit 1-11:队伍17mm允许发弹量的剩余可兑换数 */
+    uint16_t sentry_posture : 2;                         /* bit 12-13:哨兵当前姿态,1为进攻姿态,2为防御姿态,3为移动姿态 */
+    uint16_t can_enter_activating_state : 1;             /* bit 14:己方能量机关是否能够进入正在激活状态,1为当前可激活 */
+    uint16_t reserved_2 : 1;                             /* bit 15:保留位 */
 } sentry_info_t;
 
 /* 0x020E 雷达自主决策信息同步 */
 typedef struct __packed
 {
-    uint8_t radar_double_damage_chance : 2;   // bit 0-1: 雷达当前可用的“双倍易伤”触发机会剩余次数
-    uint8_t enemy_is_double_damaged : 1;      // bit 2: 对方当前是否正处于受我方雷达影响的“双倍易伤”状态中
-    uint8_t ally_encryption_level : 2;        // bit 3-4: 己方雷达当前信道数据的加密等级
-    uint8_t can_modify_password : 1;          // bit 5: 雷达当前是否允许选手修改系统密钥/密码
-    uint8_t reserved : 2;                     // bit 6-7: 雷达自主决策信息预留
+    uint8_t radar_double_damage_chance : 2;   /* bit 0-1:雷达是否拥有触发双倍易伤的机会,开局为0,至多为2 */
+    uint8_t enemy_is_double_damaged : 1;      /* bit 2:对方是否正在被触发双倍易伤。0:对方未被触发双倍易伤, 1:对方正在被触发双倍易伤 */
+    uint8_t ally_encryption_level : 2;        /* bit 3-4:己方加密等级(即对方干扰波难度等级),开局为1,最高为3 */
+    uint8_t can_modify_password : 1;          /* bit 5:当前是否可以修改密钥,1为可修改 */
+    uint8_t reserved : 2;                     /* bit 6-7:保留位 */
 } radar_info_t;
 
 typedef struct __packed
 {
-    uint16_t data_cmd_id;           /* 机器人子交互数据的指令子 ID (例如自定义图形 UI 等对应的代码) */
-    uint16_t sender_id;             /* 发送数据方机器人的通信 ID */
-    uint16_t receiver_id;           /* 接收数据方机器人或客户端的通信 ID */
-    uint8_t user_data[112];         /* 包含在交互协议中的主要用户自定义数据负载（上限 112 字节） */
+    uint16_t data_cmd_id;           /* 子内容 ID */
+    uint16_t sender_id;             /* 发送者 ID */
+    uint16_t receiver_id;           /* 接收者 ID */
+    uint8_t user_data[112];         /* 内容数据段, x最大为112 */
 } robot_interaction_data_t;
 
 /* 图形结构 */
 typedef struct __packed
 {
-    uint8_t figure_name[3];         /* 自定义图形在客户端系统中的名字标签，由三个 ASCII 字节表示 */
-    uint32_t operate_type:3;        // 操作类型：0-空操作, 1-添加图形, 2-修改图形, 3-删除图形
-    uint32_t figure_type:3;         // 图形类型：0-直线, 1-矩形, 2-整圆, 3-椭圆, 4-圆弧, 5-浮点数, 6-整数, 7-字符
-    uint32_t layer:4;               // 图形渲染所在的图层级（范围0~9）
-    uint32_t color:4;               // 图形颜色：0-红蓝主色, 1-黄, 2-绿, 3-橙, 4-紫, 5-粉, 6-青, 7-黑, 8-白
-    uint32_t details_a:9;           // 图形核心细节参数 A（如圆弧起始角度，字体大小等）
-    uint32_t details_b:9;           // 图形核心细节参数 B（如圆弧终止角度等）
-    uint32_t width:10;              // 线宽/图形线粗细（像素单位）
-    uint32_t start_x:11;            // 图形绘制起点坐标 X 位置（像素横坐标）
-    uint32_t start_y:11;            // 图形绘制起点坐标 Y 位置（像素纵坐标）
-    uint32_t details_c:10;          // 图形核心细节参数 C（如文字浮点数的精度控制等）
-    uint32_t details_d:11;          // 图形核心细节参数 D（如矩形对角线终点坐标 X 等）
-    uint32_t details_e:11;          // 图形核心细节参数 E（如矩形对角线终点坐标 Y 等）
+    uint8_t figure_name[3];         /* 图形名,在图形删除、修改等操作中,作为索引 */
+    uint32_t operate_type:3;        /* bit 0-2:图形操作。0:空操作, 1:增加, 2:修改, 3:删除 */
+    uint32_t figure_type:3;         /* bit 3-5:图形类型。0:直线, 1:矩形, 2:正圆, 3:椭圆, 4:圆弧, 5:浮点数, 6:整型数, 7:字符 */
+    uint32_t layer:4;               /* bit 6-9:图层数(0~9) */
+    uint32_t color:4;               /* bit 10-13:颜色。0:红/蓝(己方颜色), 1:黄色, 2:绿色, 3:橙色, 4:紫红色, 5:粉色, 6:青色, 7:黑色, 8:白色 */
+    uint32_t details_a:9;           /* bit 14-22:详见“表1-28 图形细节参数说明” */
+    uint32_t details_b:9;           /* bit 23-31:详见“表1-28 图形细节参数说明” */
+    uint32_t width:10;              /* bit 0-9:线宽,建议字体大小与线宽比例为10:1 */
+    uint32_t start_x:11;            /* bit 10-20:起点/圆心x坐标 */
+    uint32_t start_y:11;            /* bit 21-31:起点/圆心y坐标 */
+    uint32_t details_c:10;          /* 根据绘制的图形不同,含义不同,详见“表1-28 图形细节参数说明” */
+    uint32_t details_d:11;          /* 根据绘制的图形不同,含义不同,详见“表1-28 图形细节参数说明” */
+    uint32_t details_e:11;          /* 根据绘制的图形不同,含义不同,详见“表1-28 图形细节参数说明” */
 } interaction_figure_t;
 
 /* UI字符 */
 typedef struct __packed
 {
-    uint16_t data_id;                            /* 交互数据的具体操作特征数据码 */
-    uint16_t tx_id;                              /* 发送端的机器人通信链路 ID */
-    uint16_t rx_id;                              /* 接收端的选手操作端自定义客户端链路 ID */
-    uint8_t Character_configuration[15];         /* 针对在屏幕渲染输出的字符串配置参数（如图形基本属性信息） */
-    uint8_t Character[30];                       /* 实际需要在选手端屏幕交互绘制显示的 ASCII 字符串内容（上限 30 字节） */
+    uint16_t data_id;                            /* 数据的内容 ID, 0x0110 */
+    uint16_t tx_id;                              /* 发送者的ID */
+    uint16_t rx_id;                              /* 接收者的ID */
+    uint8_t Character_configuration[15];         /* 字符配置 */
+    uint8_t Character[30];                       /* 字符 */
 } graphic_data_struct_t;
 
 typedef struct __packed
 {
-    float target_position_x;        /* 选手在小地图端双击或点击标定的目标攻击/防守点横坐标 */
-    float target_position_y;        /* 选手在小地图端双击或点击标定的目标攻击/防守点纵坐标 */
-    uint8_t cmd_keyboard;           /* 选手在触发鼠标操作时，同时按下的辅助控制键盘键值（如 Shift, Ctrl） */
-    uint8_t target_robot_id;        /* 若点击的是特定小地图目标，对应的目标机器人专属 ID */
-    uint16_t cmd_source;            /* 产生该交互小地图指令的信息发送源头标识 */
+    float target_position_x;        /* 目标位置x轴坐标,单位m */
+    float target_position_y;        /* 目标位置y轴坐标,单位m */
+    uint8_t cmd_keyboard;           /* 云台手按下的键盘按键通用键值 */
+    uint8_t target_robot_id;        /* 对方机器人 ID */
+    uint16_t cmd_source;            /* 信息来源 ID */
 } map_command_t;
 
 /* 0x0120 哨兵自主决策指令 */
 typedef struct __packed
 {
-    uint32_t confirm_resurrection : 1;                      // bit 0: 哨兵确认处于可免费复活状态下的复活请求信号
-    uint32_t confirm_immediate_resurrection : 1;            // bit 1: 哨兵确认需要消耗金币进行“立即复活”的控制指令
-    uint32_t redeem_projectile_allowance : 11;              // bit 2-12: 哨兵本次自主决策申请远程购买的允许发弹量数量
-    uint32_t remote_redeem_projectile_request_times : 4;    // bit 13-16: 哨兵发出远程发弹量购买请求的增量阶梯次数
-    uint32_t remote_redeem_HP_request_times : 4;            // bit 17-20: 哨兵发出远程血量补给购买请求的增量阶梯次数
-    uint32_t sentry_posture_cmd : 2;                        // bit 21-22: 哨兵向系统上报或变更当前运行战术姿态控制指令
-    uint32_t confirm_activate_energy_mechanism : 1;         // bit 23: 哨兵触发请求配合队友激活己方大/小能量机关标志
-    uint32_t reserved : 8;                                  // bit 24-31: 哨兵自主决策控制命令保留段
+    uint32_t confirm_resurrection : 1;                      /* bit 0:哨兵机器人是否确认复活。0表示哨兵机器人确认不复活, 1表示哨兵机器人确认复活 */
+    uint32_t confirm_immediate_resurrection : 1;            /* bit 1:哨兵机器人是否确认兑换立即复活。0表示确认不兑换, 1表示确认兑换立即复活 */
+    uint32_t redeem_projectile_allowance : 11;              /* bit 2-12:哨兵将要兑换的发弹量值 */
+    uint32_t remote_redeem_projectile_request_times : 4;    /* bit 13-16:哨兵远程兑换发弹量的请求次数 */
+    uint32_t remote_redeem_HP_request_times : 4;            /* bit 17-20:哨兵远程兑换血量的请求次数 */
+    uint32_t sentry_posture_cmd : 2;                        /* bit 21-22:哨兵修改当前姿态指令,1为进攻姿态,2为防御姿态,3为移动姿态 */
+    uint32_t confirm_activate_energy_mechanism : 1;         /* bit 23:哨兵机器人是否确认使能量机关进入正在激活状态,1为确认 */
+    uint32_t reserved : 8;                                  /* bit 24-31:保留位 */
 } sentry_cmd_t;
 
 /* 0x0121 雷达自主决策指令 */
 typedef struct __packed
 {
-    uint8_t radar_double_damage_cmd;  /* 雷达下达的触发“对方全队双倍易伤”控制开关（1代表下达） */
-    uint8_t password_cmd;             /* 雷达修改、检验及尝试破解系统加密密码对应的控制指令码 */
-    uint8_t password_1;               /* 动态配置的新密码/密钥第 1 个字节 */
-    uint8_t password_2;               /* 动态配置的新密码/密钥第 2 个字节 */
-    uint8_t password_3;               /* 动态配置的新密码/密钥第 3 个字节 */
-    uint8_t password_4;               /* 动态配置的新密码/密钥第 4 个字节 */
-    uint8_t password_5;               /* 动态配置的新密码/密钥第 5 个字节 */
-    uint8_t password_6;               /* 动态配置的新密码/密钥第 6 个字节 */
+    uint8_t radar_double_damage_cmd;  /* 雷达是否确认触发双倍易伤 */
+    uint8_t password_cmd;             /* 密钥更新或验证指令, byte1为指令类型 */
+    uint8_t password_1;               /* 密钥值 byte 2 */
+    uint8_t password_2;               /* 密钥值 byte 3 */
+    uint8_t password_3;               /* 密钥值 byte 4 */
+    uint8_t password_4;               /* 密钥值 byte 5 */
+    uint8_t password_5;               /* 密钥值 byte 6 */
+    uint8_t password_6;               /* 密钥值 byte 7 */
 } radar_cmd_t;
 
 typedef struct __packed
 {
-    uint16_t hero_position_x;         /* 地图层级下英雄机器人的精细缩放横坐标（毫米级单位） */
-    uint16_t hero_position_y;         /* 地图层级下英雄机器人的精细缩放纵坐标（毫米级单位） */
-    uint16_t engineer_position_x;     /* 地图层级下工程机器人的精细缩放横坐标 */
-    uint16_t engineer_position_y;     /* 地图层级下工程机器人的精细缩放纵坐标 */
-    uint16_t infantry_3_position_x;   /* 地图层级下 3 号步兵机器人的精细缩放横坐标 */
-    uint16_t infantry_3_position_y;   /* 地图层级下 3 号步兵机器人的精细缩放纵坐标 */
-    uint16_t infantry_4_position_x;   /* 地图层级下 4 号步兵机器人的精细缩放横坐标 */
-    uint16_t infantry_4_position_y;   /* 地图层级下 4 号步兵机器人的精细缩放纵坐标 */
-    uint16_t reserved_1;              /* 地面地图位置阵列保留变量 1 */
-    uint16_t reserved_2;              /* 地面地图位置阵列保留变量 2 */
-    uint16_t sentry_position_x;       /* 地图层级下哨兵机器人的精细缩放横坐标 */
-    uint16_t sentry_position_y;       /* 地图层级下哨兵机器人的精细缩放纵坐标 */
+    uint16_t hero_position_x;         /* 对方英雄机器人x位置坐标,单位:cm */
+    uint16_t hero_position_y;         /* 对方英雄机器人y位置坐标,单位:cm */
+    uint16_t engineer_position_x;     /* 对方工程机器人x位置坐标,单位:cm */
+    uint16_t engineer_position_y;     /* 对方工程机器人y位置坐标,单位:cm */
+    uint16_t infantry_3_position_x;   /* 对方3号步兵机器人x位置坐标,单位:cm */
+    uint16_t infantry_3_position_y;   /* 对方3号步兵机器人y位置坐标,单位:cm */
+    uint16_t infantry_4_position_x;   /* 对方4号步兵机器人x位置坐标,单位:cm */
+    uint16_t infantry_4_position_y;   /* 对方4号步兵机器人y位置坐标,单位:cm */
+    uint16_t reserved_1;              /* 对方6号空中机器人x位置坐标,单位:cm */
+    uint16_t reserved_2;              /* 对方6号空中机器人y位置坐标,单位:cm */
+    uint16_t sentry_position_x;       /* 对方哨兵机器人x位置坐标,单位:cm */
+    uint16_t sentry_position_y;       /* 对方哨兵机器人y位置坐标,单位:cm */
 } map_robot_data_t;
 
 typedef struct __packed
 {
-    uint8_t intention;                /* 本次下发的路径战术意图（如 0-常规巡航, 1-紧急增援, 2-伏击防守） */
-    uint16_t start_position_x;        /* 选手端地图导航规划路径的起点横坐标 */
-    uint16_t start_position_y;        /* 选手端地图导航规划路径的起点纵坐标 */
-    int8_t delta_x[49];               /* 路径规划中后续 49 个离散航点的 X 轴相对偏移差值阵列 */
-    int8_t delta_y[49];               /* 路径规划中后续 49 个离散航点的 Y 轴相对偏移差值阵列 */
-    uint16_t sender_id;               /* 下发路径规划任务的源机器人/发送端节点 ID */
+    uint8_t intention;                /* 1:到目标点攻击, 2:到目标点防守, 3:移动到目标点 */
+    uint16_t start_position_x;        /* 路径起点x轴坐标,单位:dm */
+    uint16_t start_position_y;        /* 路径起点y轴坐标,单位:dm */
+    int8_t delta_x[49];               /* 路径点x轴增量数组,单位:dm */
+    int8_t delta_y[49];               /* 路径点y轴增量数组,单位:dm */
+    uint16_t sender_id;               /* 发送者 ID */
 } map_data_t;
 
 typedef struct __packed
 {
-    uint16_t sender_id;               /* 该帧自定义专属非标配置信息的发送源节点 ID */
-    uint16_t receiver_id;             /* 该帧自定义专属非标配置信息的接收目标节点 ID */
-    uint8_t user_data[30];            /* 自定义非结构化用户信息缓存数据区（上限 30 字节） */
+    uint16_t sender_id;               /* 发送者的ID */
+    uint16_t receiver_id;             /* 接收者的ID */
+    uint8_t user_data[30];            /* 字符 */
 } custom_info_t;
 
 /* 0x0306 自定义控制器键鼠操作 */
 typedef struct __packed
 {
-    uint16_t key_value;               /* 自定义控制器上传的物理键盘复合按键键值（按位映射各个按键状态） */
-    uint16_t x_position:12;           // bit 0-11: 选手鼠标当前的虚拟屏幕绝对横坐标位置值
-    uint16_t mouse_left:4;            // bit 12-15: 鼠标左键点击/持续按下状态深度标志
-    uint16_t y_position:12;           // bit 16-27: 选手鼠标当前的虚拟屏幕绝对纵坐标位置值
-    uint16_t mouse_right:4;           // bit 28-31: 鼠标右键点击/持续按下状态深度标志
-    uint16_t reserved;                /* 键鼠控制器交互数据保留对齐位 */
+    uint16_t key_value;               /* 键盘键值: bit 0-7:按键1键值, bit 8-15:按键2键值 */
+    uint16_t x_position:12;           /* bit 0-11:鼠标X轴像素位置 */
+    uint16_t mouse_left:4;            /* bit 12-15:鼠标左键状态 */
+    uint16_t y_position:12;           /* bit 0-11:鼠标Y轴像素位置 */
+    uint16_t mouse_right:4;           /* bit 12-15:鼠标右键状态 */
+    uint16_t reserved;                /* 保留位 */
 } custom_client_data_t;
 
-typedef struct __packed
+typedef struct
 {
     Offline_Check_t offline;
     game_status_t game_status;                           /* 内部包含：0x0001 比赛状态数据段 */
     game_result_t game_result;                           /* 内部包含：0x0002 比赛结果数据段 */
     game_robot_HP_t game_robot_HP;                       /* 内部包含：0x0003 所有机器人实时血量数据段 */
 
-    referee_warning_t referee_warning;                   /* 内部包含：0x0104 系统违规与警告数据段 */
-    dart_info_t dart_info;                               /* 内部包含：0x0105 飞镖发射及目标打击统计数据段 */
-    robot_status_t robot_status;                         /* 内部包含：0x0201 本机基本性能与功率管理控制段 */
-    power_heat_data_t power_heat_data;                   /* 内部包含：0x0202 本机实时缓冲能量与枪口双路热量段 */
-    robot_pos_t robot_pos;                               /* 内部包含：0x0203 本机全局平面位置与朝向姿态数据段 */
-    buff_t buff;                                         /* 内部包含：0x0204 机器人回血/冷却/防御增益及超级电容标志 */
-    hurt_data_t hurt_data;                               /* 内部包含：0x0206 本机受击装甲板方位及扣血原因数据段 */
-    shoot_data_t shoot_data;                             /* 内部包含：0x0207 本机射击弹丸类型、射频及初速度检测段 */
-    projectile_allowance_t projectile_allowance;         /* 内部包含：0x0208 机器人17/42mm枪口可用弹量及金币代币余额 */
-    rfid_status_t rfid_status;                           /* 内部包含：0x0209 机器人当前覆盖踩中的所有 RFID 增益点状态 */
-    dart_client_cmd_t dart_client_cmd;                   /* 内部包含：0x020A 飞镖闸门开启状态与选定目标时间戳指令段 */
+    referee_warning_t referee_warning;                   /* 内部包含：0x0104 裁判警告数据段 */
+    dart_info_t dart_info;                               /* 内部包含：0x0105 飞镖发射相关数据段 */
+    robot_status_t robot_status;                         /* 内部包含：0x0201 机器人性能体系数据段 */
+    power_heat_data_t power_heat_data;                   /* 内部包含：0x0202 实时底盘缓冲能量和射击热量数据段 */
+    robot_pos_t robot_pos;                               /* 内部包含：0x0203 机器人位置数据段 */
+    buff_t buff;                                         /* 内部包含：0x0204 机器人增益和底盘能量数据段 */
+    hurt_data_t hurt_data;                               /* 内部包含：0x0206 伤害状态数据段 */
+    shoot_data_t shoot_data;                             /* 内部包含：0x0207 实时射击数据段 */
+    projectile_allowance_t projectile_allowance;         /* 内部包含：0x0208 允许发弹量数据段 */
+    rfid_status_t rfid_status;                           /* 内部包含：0x0209 机器人 RFID 模块状态数据段 */
+    dart_client_cmd_t dart_client_cmd;                   /* 内部包含：0x020A 飞镖选手端指令数据段 */
 
-    ground_robot_position_t ground_robot_position;       /* 内部包含：0x020B 地面多机器人全局位置信息阵列（针对空中/雷达） */
-    radar_mark_data_t radar_mark_data;                   /* 内部包含：0x020C 雷达对红蓝两队各机型目标的双向标记进度段 */
-    sentry_info_t sentry_info;                           /* 内部包含：0x020D 哨兵机器人专属的远程兑换、姿态及自主决策状态 */
-    radar_info_t radar_info;                             /* 内部包含：0x020E 雷达机器人专属的易伤机会与信道加密决策状态 */
+    ground_robot_position_t ground_robot_position;       /* 内部包含：0x020B 地面机器人位置数据段 */
+    radar_mark_data_t radar_mark_data;                   /* 内部包含：0x020C 雷达标记进度数据段 */
+    sentry_info_t sentry_info;                           /* 内部包含：0x020D 哨兵自主决策信息同步段 */
+    radar_info_t radar_info;                             /* 内部包含：0x020E 雷达自主决策信息同步段 */
 
-    map_command_t map_command;                           /* 内部包含：0x0303 选手端点击地图下发的目标标定控制指令 */
-    event_data_t event_data;                             /* 内部包含：0x0101 全场机关、高地占领及飞镖受击点关键场地事件 */
-    custom_info_t custom_info;                           /* 内部包含：自定义非标小数据块数据段 */
-} User_Data_T;
+    map_command_t map_command;                           /* 内部包含：0x0303 选手端小地图交互数据段 */
+    event_data_t event_data;                             /* 内部包含：0x0101 场地事件数据段 */
+    custom_info_t custom_info;                           /* 内部包含：0x0308 选手端小地图接收机器人数据段 */
+} Referee_Data_t;
 
 typedef union
 {
     struct __packed
     {
-        frame_header_R_Typdef frame_header;              /* 统一封装的数据包通用 5 字节帧头 */
-        uint16_t read_cmd_id;                            /* 当前数据包对应的 2 字节核心命令字识别码 */
+        frame_header_R_Typdef frame_header;              /* 数据帧起始字节, 长度, 序号及 CRC8 */
+        uint16_t read_cmd_id;
     } RX_Data_head;
 
     struct __packed
     {
-        frame_header_R_Typdef frame_header;              /* 5 字节帧头 */
-        uint16_t read_cmd_id;                            /* 2 字节命令字 (0x0001) */
-        game_status_t game_status;                       /* 实际搭载的数据载荷：比赛状态结构体 */
-        uint16_t frame_tail;                             /* 2 字节尾部：整帧数据的 CRC16 校验值 */
+        frame_header_R_Typdef frame_header;
+        uint16_t read_cmd_id;
+        game_status_t game_status;
+        uint16_t frame_tail;
     } RX_Data_game_status;
 
     struct __packed
     {
-        frame_header_R_Typdef frame_header;              /* 5 字节帧头 */
-        uint16_t read_cmd_id;                            /* 2 字节命令字 (0x0201) */
-        robot_status_t robot_status;                     /* 实际搭载的数据载荷：机器人性能体系结构体 */
-        uint16_t frame_tail;                             /* 2 字节尾部：整帧数据的 CRC16 校验值 */
+        frame_header_R_Typdef frame_header;
+        uint16_t read_cmd_id;
+        robot_status_t robot_status;
+        uint16_t frame_tail;
     } RX_Data_robot_status;
 
-    uint8_t Data[255];                                   /* 字节数组形态：用于底层串口 DMA 接收或遍历校验的通用缓冲区 */
+    uint8_t Data[255];
 
 } ALL_RX_Data_T;
 
 extern uint8_t Referee_Rx_Buf[2][REFEREE_RXFRAME_LENGTH];
-extern User_Data_T User_data;
+extern Referee_Data_t Referee;
 
 void Referee_System_Frame_Update(uint8_t *Buff, void *device_ptr, uint16_t Size);
 

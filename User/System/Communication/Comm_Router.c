@@ -4,6 +4,7 @@
 #include "All_Motor.h"
 #include "BSP_UART.h"
 #include "Buzzer.h"
+#include "Comm_DualBoard.h"
 #include "DBUS.h"
 #include "IMU_Task.h"
 #include "Power_CAP.h"
@@ -25,6 +26,7 @@ static const CAN_Rx_Route_t CAN_Rx_Config_Table[] = {
     {FDCAN2, 0x206, &chassis_motors.DJI_6020_Steer[1],   DJI_Motor_Resolve},
     {FDCAN2, 0x207, &chassis_motors.DJI_6020_Steer[2],   DJI_Motor_Resolve},
     {FDCAN2, 0x208, &chassis_motors.DJI_6020_Steer[3],   DJI_Motor_Resolve},
+    {FDCAN2, 0x500, &Rx_Data,   DualBoard_CAN_Rx},
 
     /* ----- FDCAN3 ----- */
     {FDCAN3, 0x301, &shoot_motors.DM4310_Feed,         DM_1to4_Resolve},
@@ -45,8 +47,9 @@ void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         WS2812_Ticks_1ms();
         DWT_SysTimeUpdate();
         Offline_Monitor();
-        System_State_Update(&DBUS.offline);
-        VOFA_JustFloat(4,IMU_Data.pitch,IMU_Data.roll,IMU_Data.yaw,0);
+        System_State_Update();
+        System_State_Ticks();
+        VOFA_JustFloat(3,IMU_Data.pitch,IMU_Data.roll,IMU_Data.yaw);
     }
 }
 

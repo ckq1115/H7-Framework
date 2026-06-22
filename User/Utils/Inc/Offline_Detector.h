@@ -23,14 +23,12 @@ typedef struct {
     bool is_online;
 } Offline_Check_t;
 
-// 离线监控表条目
 typedef struct {
     Offline_Check_t *node;  // 明确指向具体的 offline 变量地址
     uint32_t timeout_ms;    // 超时阈值
     Device_Group_e group;   // 所属分组
 } Offline_Route_t;
 
-// 函数声明
 void Offline_Monitor(void);
 bool Is_Group_Online(Device_Group_e group);
 

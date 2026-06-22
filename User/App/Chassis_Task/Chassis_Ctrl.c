@@ -3,6 +3,8 @@
 //
 #include "Chassis_Ctrl.h"
 #include "All_define.h"
+#include "Comm_DualBoard.h"
+#include "Message_Center.h"
 #include "Power_Ctrl.h"
 #include "System_State.h"
 
@@ -13,6 +15,8 @@ static Chassis_Ctrl_Block_t chassis_ctrl;
 Swerve_Cfg_t S_Cfg;
 Swerve_State_t S_Now;
 
+static Subscriber_t *sys_state_sub;
+static System_State_t local_sys_state;
 /**
  * @brief 底盘控制初始化
  * @param MOTOR 电机总结构体指针
@@ -23,7 +27,6 @@ uint8_t Chassis_Control_Init(void)
     // 初始化舵轮物理配置及物理状态
     Swerve_Init(&S_Cfg, &S_Now);
 
-    // 1. 底盘速度外环 PID 初始化 (输出为目标加速度)
     float PID_V_Param[3] = {8.0f, 0.0f, 0.0f};
     PID_Init(&chassis_ctrl.PID_Vx, 8.0f, 5.0f, PID_V_Param,
         0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
@@ -34,7 +37,6 @@ uint8_t Chassis_Control_Init(void)
     PID_Init(&chassis_ctrl.PID_Vw, 8.0f, 8.0f, PID_Vw_Param,
         0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
 
-    // 2. 轮系单轴 PID 参数配置
     float PID_6020_Pos[3] = {800.0f, 0.0f, 0.0f};
     float PID_6020_Spd[3] = {85.0f,  0.0f, 0.0f};
     float PID_3508_Spd[3] = {5.0f,   0.1f,  0.0f};
@@ -55,6 +57,7 @@ uint8_t Chassis_Control_Init(void)
     Power_Ctrl_Init(&chassis_model);
 
     System_State_Report(ID_CHASSIS, STATUS_PREPARING);
+    sys_state_sub = SubRegister("system_state", sizeof(System_State_t));
     return 1;
 }
 
@@ -67,6 +70,7 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *p_motor,
         System_State_Report(ID_CHASSIS, STATUS_ERROR);
         return;
     }
+    SubGetMessage(sys_state_sub, &local_sys_state);
     System_State_Report(ID_CHASSIS, STATUS_RUN);
     for (int i = 0; i < 4; i++) {
         chassis_ctrl.Steer[i].p_data = &p_motor->DJI_6020_Steer[i];
@@ -114,15 +118,21 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *p_motor,
         chassis_ctrl.Drive[i].PID_S.Output = MATH_Limit_float(16384,-16384, chassis_ctrl.Drive[i].PID_S.Output);
     }
 
-    DJI_Motor_Send(&hfdcan1, 0x200,
-                   (int16_t)chassis_ctrl.Drive[0].PID_S.Output,
-                   (int16_t)chassis_ctrl.Drive[1].PID_S.Output,
-                   (int16_t)chassis_ctrl.Drive[2].PID_S.Output,
-                   (int16_t)chassis_ctrl.Drive[3].PID_S.Output);
+    if (!(local_sys_state.global_mode == GLOBAL_SAFE_LOCK ||
+      local_sys_state.global_mode == GLOBAL_STANDBY)){
+        DJI_Motor_Send(&hfdcan1, 0x200,
+                       (int16_t)chassis_ctrl.Drive[0].PID_S.Output,
+                       (int16_t)chassis_ctrl.Drive[1].PID_S.Output,
+                       (int16_t)chassis_ctrl.Drive[2].PID_S.Output,
+                       (int16_t)chassis_ctrl.Drive[3].PID_S.Output);
 
-    DJI_Motor_Send(&hfdcan2, 0x1FE,
-                   (int16_t)chassis_ctrl.Steer[0].PID_S.Output,
-                   (int16_t)chassis_ctrl.Steer[1].PID_S.Output,
-                   (int16_t)chassis_ctrl.Steer[2].PID_S.Output,
-                   (int16_t)chassis_ctrl.Steer[3].PID_S.Output);
+        DJI_Motor_Send(&hfdcan2, 0x1FE,
+                       (int16_t)chassis_ctrl.Steer[0].PID_S.Output,
+                       (int16_t)chassis_ctrl.Steer[1].PID_S.Output,
+                       (int16_t)chassis_ctrl.Steer[2].PID_S.Output,
+                       (int16_t)chassis_ctrl.Steer[3].PID_S.Output);
+    }
+    if (!Is_Group_Online(CHASSIS)) {
+        System_State_Report(ID_CHASSIS, STATUS_LOST);
+    }
 }
