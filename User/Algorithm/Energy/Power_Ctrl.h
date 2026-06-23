@@ -1,47 +1,57 @@
-#ifndef G4_FRAMEWORK_POWER_CTRL_H
-#define G4_FRAMEWORK_POWER_CTRL_H
+#ifndef H7_FRAMEWORK_POWER_CTRL_H
+#define H7_FRAMEWORK_POWER_CTRL_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
-#define POWER_RPM_TO_RAD       (2.0f * 3.14159265f / 60.0f)
+#define POWER_RPM_TO_RAD (2.0f * 3.14159265f / 60.0f)
 
-// 电机功率物理模型参数
+// 电机物理模型参数
 typedef struct {
     float k1, k2, k3, k4;
-    float current_convert;
+    float current_convert; // PID 输出到实际转矩电流的转换系数
 } Power_Motor_Model_t;
 
-// 输入的单电机状态
+extern const Power_Motor_Model_t MODEL_M3508;
+extern const Power_Motor_Model_t MODEL_M6020;
+
+// 单电机状态
 typedef struct {
     float speed_rpm;       // 当前实时转速 (RPM)
     float original_cmd;    // 原始输入的 PID 电流控制项
-    float limited_cmd;     // 缩放限制后的电流控制项
+    float limited_cmd;     // 缩放限制后的最终输出电流
 } Motor_Power_State_t;
 
-// 功率控制器
+// 功率计算
 typedef struct {
-    float Kp;
-    float target_buffer;
-    Power_Motor_Model_t m3508;
-    Power_Motor_Model_t m6020;
+    Motor_Power_State_t *state;       // 指向对应的电机状态变量
+    const Power_Motor_Model_t *model; // 指向该电机的物理模型
+} Power_Node_t;
 
+// 功率限制组：同组内的电机按照相同的比例一起被限制
+typedef struct {
+    Power_Node_t *nodes; // 该组包含的电机节点数组
+    uint8_t node_count;  // 该组内的电机数量
+} Power_Group_t;
+
+// 控制器主体
+typedef struct {
     float total_pred_power;   // 解算后预测的总功率
 } Power_Ctrl_t;
 
 void Power_Ctrl_Init(Power_Ctrl_t *ctrl);
 
 /**
- * @brief 核心控制算法（纯数学解算）
+ * @brief 功率控制算法
  * @param ctrl          算法实例
- * @param allowed_limit 当前解算允许的最大绝对功率 (瓦特 W)
- * @param cur_buffer    当前的裁判系统缓冲能量 (焦耳 J)
- * @param m3508_group   底盘3508电机的速度与输入电流集合 (4个)
- * @param m6020_group   底盘6020舵电机的速度与输入电流集合 (4个)
+ * @param allowed_limit 允许的最大功率 (W)
+ * @param groups        功率控制组数组。排列规则：下标越小，优先级越低！
+ * 例如：groups[0] 放驱动轮(最先被砍)，groups[1] 放舵轮(最后被砍)
+ * @param group_count   总共有多少个组
  */
 void Power_Ctrl_Calculate(Power_Ctrl_t *ctrl,
-                           float allowed_limit,
-                           float cur_buffer,
-                           Motor_Power_State_t m3508_group[4],
-                           Motor_Power_State_t m6020_group[4]);
+                          float allowed_limit,
+                          Power_Group_t *groups,
+                          uint8_t group_count);
 
-#endif // G4_FRAMEWORK_POWER_CTRL_H
+#endif // H7_FRAMEWORK_POWER_CTRL_H

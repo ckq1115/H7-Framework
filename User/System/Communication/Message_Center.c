@@ -9,7 +9,9 @@
 #include "DBUS.h"
 #include "All_Motor.h"
 #include "IMU_Task.h"
+#include "Power_CAP.h"
 #include "Referee.h"
+#include "VT13.h"
 
 #define MAX_TOPICS      32
 #define MAX_NAME_LEN    32
@@ -145,8 +147,10 @@ void Message_Center_Init(void) {
     }
 
     PubRegister("dbus_data",  &DBUS,      sizeof(DBUS));
+    PubRegister("vt13_data",  &VT13,      sizeof(VT13));
     PubRegister("referee_data",  &Referee,      sizeof(Referee_Data_t));
     PubRegister("imu_data",   &IMU_Data,  sizeof(IMU_Data));
+    PubRegister("cap_data",   &cap,  sizeof(cap));
 
     PubRegister("chassis_motors", &chassis_motors, sizeof(Chassis_Motor_Group_t));
     PubRegister("gimbal_motors",  &gimbal_motors,  sizeof(Gimbal_Motor_Group_t));

@@ -153,6 +153,7 @@ void PID_Init(
     uint8_t improve);
 void PID_set(PID_t *pid, float kpid[3]);
 float PID_Calculate(PID_t *pid, float measure, float ref);
+float PID_Clear(PID_t *pid);
 
 /*************************** FEEDFORWARD CONTROL *****************************/
 typedef struct __packed

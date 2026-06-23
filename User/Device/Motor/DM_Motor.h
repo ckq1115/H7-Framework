@@ -55,12 +55,6 @@ typedef struct {
     float ralativeAngle;
 } DM_MOTOR_DATA_Typedef;
 
-typedef struct {
-    const DM_MOTOR_DATA_Typedef *p_data;
-    PID_t PID_P;
-    PID_t PID_S;
-} DM_MOTOR_Typedef;
-
 typedef enum {
     DM_CMD_MOTOR_MODE    = 0xfc,//电机使能
     DM_CMD_RESET_MODE    = 0xfd,//电机失能

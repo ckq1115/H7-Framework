@@ -30,17 +30,14 @@ void Power_Cap_Rx(void *instance, uint8_t *rx_buf)
     }
 }
 
-/**
- * @brief 电容控制数据发送
- */
-void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, Cap_t *cap, float power_limit, Referee_Data_t *referee)
-{
-    if (cap == NULL || referee == NULL) return;
+void Power_Cap_Tx(hcan_t *hcan, uint16_t can_id, bool enable_boost, float power_limit, uint8_t cur_buffer, bool is_alive) {
+    CapSetData_t tx_data = {0};
 
-    cap->set.Control.power_key      = (uint8_t)open_cap_flag;
-    cap->set.Control.capPowerLimit  = (uint8_t)power_limit;
-    cap->set.Control.robot_state    = (referee->robot_status.current_HP > 0) ? 1 : 0;
-    cap->set.Control.check_code     = 0xAA;
+    tx_data.Control.power_key     = enable_boost ? 1 : 0;
+    tx_data.Control.capPowerLimit = (uint8_t)power_limit;
+    tx_data.Control.buffer_now    = cur_buffer;
+    tx_data.Control.robot_state   = (is_alive > 0) ? 1 : 0;
+    tx_data.Control.check_code    = 0xAA;
 
-    FDCAN_Send_Msg(hcan, can_id, cap->set.raw_data, 8);
+    FDCAN_Send_Msg(hcan, can_id, tx_data.raw_data, 8);
 }

@@ -48,19 +48,26 @@
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for IMUTask */
-osThreadId_t IMUTaskHandle;
-const osThreadAttr_t IMUTask_attributes = {
-  .name = "IMUTask",
+/* Definitions for IMU */
+osThreadId_t IMUHandle;
+const osThreadAttr_t IMU_attributes = {
+  .name = "IMU",
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
-/* Definitions for MotorTask02 */
-osThreadId_t MotorTask02Handle;
-const osThreadAttr_t MotorTask02_attributes = {
-  .name = "MotorTask02",
+/* Definitions for Motor */
+osThreadId_t MotorHandle;
+const osThreadAttr_t Motor_attributes = {
+  .name = "Motor",
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal,
+};
+/* Definitions for Command */
+osThreadId_t CommandHandle;
+const osThreadAttr_t Command_attributes = {
+  .name = "Command",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh1,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,6 +77,7 @@ const osThreadAttr_t MotorTask02_attributes = {
 
 void IMU_Task(void *argument);
 void Motor_Task(void *argument);
+void Command_Task(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -101,11 +109,14 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of IMUTask */
-  IMUTaskHandle = osThreadNew(IMU_Task, NULL, &IMUTask_attributes);
+  /* creation of IMU */
+  IMUHandle = osThreadNew(IMU_Task, NULL, &IMU_attributes);
 
-  /* creation of MotorTask02 */
-  MotorTask02Handle = osThreadNew(Motor_Task, NULL, &MotorTask02_attributes);
+  /* creation of Motor */
+  MotorHandle = osThreadNew(Motor_Task, NULL, &Motor_attributes);
+
+  /* creation of Command */
+  CommandHandle = osThreadNew(Command_Task, NULL, &Command_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -153,6 +164,24 @@ __weak void Motor_Task(void *argument)
     osDelay(1);
   }
   /* USER CODE END Motor_Task */
+}
+
+/* USER CODE BEGIN Header_Command_Task */
+/**
+* @brief Function implementing the Command thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Command_Task */
+__weak void Command_Task(void *argument)
+{
+  /* USER CODE BEGIN Command_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END Command_Task */
 }
 
 /* Private application code --------------------------------------------------*/

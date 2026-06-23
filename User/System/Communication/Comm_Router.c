@@ -3,15 +3,13 @@
 #include "Comm_Router.h"
 #include "All_Motor.h"
 #include "BSP_UART.h"
-#include "Buzzer.h"
 #include "Comm_DualBoard.h"
 #include "DBUS.h"
 #include "IMU_Task.h"
 #include "Power_CAP.h"
-#include "System_State.h"
-#include "Vofa.h"
+#include "Referee.h"
+#include "usart.h"
 #include "VT13.h"
-#include "WS2812.h"
 
 static const CAN_Rx_Route_t CAN_Rx_Config_Table[] = {
     /* ----- FDCAN1 ----- */
@@ -32,7 +30,7 @@ static const CAN_Rx_Route_t CAN_Rx_Config_Table[] = {
     {FDCAN3, 0x301, &shoot_motors.DM4310_Feed,         DM_1to4_Resolve},
     {FDCAN3, 0x202, &shoot_motors.DJI_3508_Pull,       DJI_Motor_Resolve},
     {FDCAN3, 0x203, &gimbal_motors.DJI_3508_Yaw,        DJI_Motor_Resolve},
-    {FDCAN3, 0x288, &cap.get,                            Power_Cap_Rx},
+    {FDCAN3, 0x288, &cap,                            Power_Cap_Rx},
 };
 
 static const UART_Rx_Route_t UART_Rx_Config_Table[] = {
@@ -42,16 +40,6 @@ static const UART_Rx_Route_t UART_Rx_Config_Table[] = {
     {&huart1,  0, Referee_Rx_Buf[0], Referee_Rx_Buf[1], REFEREE_RXFRAME_LENGTH, NULL,  Referee_System_Frame_Update},
 };
 
-void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-    if (htim->Instance == TIM4) {
-        WS2812_Ticks_1ms();
-        DWT_SysTimeUpdate();
-        Offline_Monitor();
-        System_State_Update();
-        System_State_Ticks();
-        VOFA_JustFloat(3,IMU_Data.pitch,IMU_Data.roll,IMU_Data.yaw);
-    }
-}
 
 void CAN_Router_Init(void)
 {

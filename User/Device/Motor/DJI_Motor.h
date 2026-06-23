@@ -26,12 +26,6 @@ typedef struct {
     int16_t Laps;
 } DJI_MOTOR_DATA_Typedef;
 
-typedef struct {
-    const DJI_MOTOR_DATA_Typedef *p_data;
-    PID_t PID_P;
-    PID_t PID_S;
-} DJI_MOTOR_Typedef;
-
 void DJI_Motor_Dispatch(FDCAN_HandleTypeDef *hfdcan, uint32_t FIFO_x);
 void DJI_Motor_Resolve(void* instance, uint8_t* rx_data);
 void DJI_Motor_Send(FDCAN_HandleTypeDef* hcan, uint32_t stdid, int16_t n1, int16_t n2, int16_t n3, int16_t n4);

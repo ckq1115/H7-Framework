@@ -31,13 +31,6 @@ typedef struct
 
 }LK_MOTOR_DATA_Typedef;
 
-typedef struct
-{
-    LK_MOTOR_DATA_Typedef DATA;
-    PID_t PID_P;
-    PID_t PID_S;
-}LK_MOTOR_Typedef;
-
 void LK_Motor_Resolve(void *instance, uint8_t *RxMessage);
 void LK_Motor_Iq_Send(FDCAN_HandleTypeDef* hcan, uint16_t motor_id, int16_t iq);
 void LK_Motor_Data_Read(FDCAN_HandleTypeDef* hcan, uint16_t motor_id);

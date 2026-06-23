@@ -6,31 +6,32 @@
 #include "All_Motor.h"
 #include "DBUS.h"
 #include "Power_CAP.h"
+#include "Referee.h"
 #include "VT13.h"
 
 static const Offline_Route_t Offline_Config_Table[] = {
     /* ----- 底盘组 ----- */
-    /*{&chassis_motors.DJI_3508_Chassis[0].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
+    {&chassis_motors.DJI_3508_Chassis[0].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
     {&chassis_motors.DJI_3508_Chassis[1].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
     {&chassis_motors.DJI_3508_Chassis[2].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
-    {&chassis_motors.DJI_3508_Chassis[3].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},*/
+    {&chassis_motors.DJI_3508_Chassis[3].offline,  MOTOR_OFFLINE_TIME,  CHASSIS},
     {&chassis_motors.DJI_6020_Steer[0].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
     {&chassis_motors.DJI_6020_Steer[1].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
     {&chassis_motors.DJI_6020_Steer[2].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
     {&chassis_motors.DJI_6020_Steer[3].offline,    MOTOR_OFFLINE_TIME,  CHASSIS},
 
-    /*/* ----- 云台组 ----- #1#
+    /* ----- 云台组 ----- */
     {&gimbal_motors.DJI_3508_Yaw.offline,         MOTOR_OFFLINE_TIME,  GIMBAL},
 
-    /* ----- 发射组 ----- #1#
+    /* ----- 发射组 ----- */
     {&shoot_motors.DM4310_Feed.offline,          MOTOR_OFFLINE_TIME,  SHOOT},
-    {&shoot_motors.DJI_3508_Pull.offline,        MOTOR_OFFLINE_TIME,  SHOOT},*/
+    {&shoot_motors.DJI_3508_Pull.offline,        MOTOR_OFFLINE_TIME,  SHOOT},
 
     /* ----- 其他系统 ----- */
     {&DBUS.offline,                                DBUS_OFFLINE_TIME,   GROUP_NONE},
-    //{&VT13.offline,                                DBUS_OFFLINE_TIME,   GROUP_NONE},
+    {&VT13.offline,                                DBUS_OFFLINE_TIME,   GROUP_NONE},
     {&Referee.offline,                       REFEREE_OFFLINE_TIME, GROUP_NONE},
-    //{&cap.get.offline,                             CAP_OFFLINE_TIME,    GROUP_NONE},
+    {&cap.get.offline,                             CAP_OFFLINE_TIME,    GROUP_NONE},
     // 注意：如果有裁判系统，也可以在这里统一加上它的 offline 地址
 };
 

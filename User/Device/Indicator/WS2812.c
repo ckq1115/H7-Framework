@@ -181,7 +181,7 @@ void WS2812_SetMode_Blink(uint16_t index, uint8_t r, uint8_t g, uint8_t b, float
 /**
  * @brief  核心心跳：隐式完成颜色看板刷新与一键发送，建议 20ms 或 30ms 节拍调用
  */
-void WS2812_Ticks_1ms(void)
+void WS2812_Ticks(void)
 {
     // 利用硬件内置的分频发送锁，如果上一次的 DMA 串行流还没发完，直接不计算，安全退出
     if (isSending) return;

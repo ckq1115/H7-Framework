@@ -8,11 +8,9 @@
 #include "stm32h7xx_hal.h"
 #include <string.h>
 #include "Message_Center.h"
-#include "DBUS.h"
 #include "Referee.h"
 
 System_State_t sys_state;
-static Subscriber_t *dbus_sub = NULL;
 static Subscriber_t *referee_sub = NULL;
 static Publisher_t  *sys_state_pub = NULL;
 
@@ -59,7 +57,7 @@ static const Flow_t Flow_Lost = {.steps = {
 };
 
 static const Flow_t Flow_Remote_Recover = {.steps = {
-    {2500, 100, RGB_BLUE},
+    {2500, 150, RGB_BLUE},
     {0, 40, RGB_OFF},
     {3000, 150, RGB_GREEN}},
     .total = 3
@@ -88,11 +86,12 @@ static struct {
 static uint32_t state_timer = 0;
 static System_Error_Code_u last_error = {0};
 static const Flow_t *playing_flow = NULL;
+static bool g_remote_is_online = false;
 
 static void Action_Push(const Flow_t *flow);
 static void Update_Power_Status(uint32_t now, Referee_Data_t *ref);
 static bool Check_Boot_Sequence(uint32_t now);
-static void Update_Error_Flags(Offline_Check_t *remote, bool in_boot_grace_period);
+static void Update_Error_Flags(bool remote_is_online, bool in_boot_grace_period);
 static void Arbitrate_Global_Mode(uint32_t now);
 static void Build_And_Play_Module_Error(void);
 
@@ -103,13 +102,15 @@ static bool Is_All_Tasks_Running(void) {
             sys_state.task_health.Shoot   == STATUS_RUN);
 }
 
+void System_State_Set_Remote_Status(bool is_online) {
+    g_remote_is_online = is_online;
+}
+
 void System_State_Init(void) {
     memset(&sys_state, 0, sizeof(sys_state));
     sys_state.global_mode = GLOBAL_INIT_STAGE;
-    sys_state.power_limit = 45.0f;
     memset(&ctrl, 0, sizeof(ctrl));
 
-    dbus_sub    = SubRegister("dbus_data", sizeof(DBUS_Typedef));
     referee_sub = SubRegister("referee_data", sizeof(Referee_Data_t));
     sys_state_pub = PubRegister("system_state", &sys_state, sizeof(System_State_t));
 
@@ -125,18 +126,46 @@ void System_State_Report(Module_ID_e id, App_Status_e status) {
 
 void System_State_Update(void) {
     uint32_t now = HAL_GetTick();
-
-    DBUS_Typedef local_dbus = {0};
     Referee_Data_t local_ref = {0};
 
-    if (dbus_sub)    SubGetMessage(dbus_sub, &local_dbus);
     if (referee_sub) SubGetMessage(referee_sub, &local_ref);
 
-    Update_Power_Status(now, &local_ref);
+    if (local_ref.offline.is_online)
+    {
+        sys_state.power_limit   = (float)local_ref.robot_status.chassis_power_limit;
+        sys_state.buffer_energy = (float)local_ref.power_heat_data.buffer_energy;
+        sys_state.robot_level   = local_ref.robot_status.robot_level;
+        sys_state.remain_HP     = local_ref.robot_status.current_HP;
+        sys_state.max_HP        = local_ref.robot_status.maximum_HP;
 
+        uint8_t id = local_ref.robot_status.robot_id;
+        if (id == 1 || id == 101) {
+            sys_state.shooter_heat = (float)local_ref.power_heat_data.shooter_42mm_barrel_heat;
+        } else {
+            sys_state.shooter_heat = (float)local_ref.power_heat_data.shooter_17mm_barrel_heat;
+        }
+        sys_state.shooter_limit = (float)local_ref.robot_status.shooter_barrel_heat_limit;
+        // 获取弹速
+        if (local_ref.shoot_data.initial_speed > 10.0f) {
+            sys_state.bullet_speed = local_ref.shoot_data.initial_speed;
+        }
+    }
+    else
+    {
+        sys_state.power_limit   = 45.0f;
+        sys_state.buffer_energy = 40.0f;
+        sys_state.robot_level   = 1;
+        sys_state.remain_HP     = 100;
+        sys_state.max_HP        = 100;
+        sys_state.shooter_heat  = 0.0f;
+        sys_state.shooter_limit = 100.0f;
+        sys_state.bullet_speed  = 15.0f;
+    }
+
+    Update_Power_Status(now, &local_ref);
     bool in_boot_grace_period = !Check_Boot_Sequence(now);
 
-    Update_Error_Flags(&local_dbus.offline, in_boot_grace_period);
+    Update_Error_Flags(g_remote_is_online, in_boot_grace_period);
     Arbitrate_Global_Mode(now);
 
     if (sys_state_pub) {
@@ -194,8 +223,8 @@ static bool Check_Boot_Sequence(uint32_t now) {
 }
 
 // 更新错误标志位
-static void Update_Error_Flags(Offline_Check_t *remote, bool in_boot_grace_period) {
-    sys_state.error.bit.remote_lost  = !remote->is_online;
+static void Update_Error_Flags(bool remote_is_online, bool in_boot_grace_period) {
+    sys_state.error.bit.remote_lost  = !remote_is_online; // 直接赋值
     sys_state.error.bit.referee_lost = !pwr_info.ref_online;
     sys_state.error.bit.imu_fault    = (sys_state.task_health.IMU == STATUS_ERROR || sys_state.task_health.IMU == STATUS_INIT);
 

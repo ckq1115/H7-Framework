@@ -63,7 +63,7 @@ void WS2812_SetMode_Blink(uint16_t index, uint8_t r, uint8_t g, uint8_t b, float
 /**
  * @brief 【全新接口】WS2812 状态机核心后台心跳，需要挂载在 1ms 定时器或 Task 中
  */
-void WS2812_Ticks_1ms(void);
+void WS2812_Ticks(void);
 
 // 硬件 DMA 回调句柄保持不变
 void WS2812_DMA_Handler(uint8_t half_cplt);

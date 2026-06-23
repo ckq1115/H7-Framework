@@ -46,15 +46,6 @@ typedef struct
 	float pos_init_rad;
 }BM_MOTOR_DATA_Typedef;
 
-typedef struct
-{
-    uint8_t PID_INIT;
-    BM_MOTOR_DATA_Typedef DATA;
-    Feedforward_t PID_F;
-    PID_t PID_P;
-    PID_t PID_S;
-}BM_MOTOR_Typedef;
-
 extern BM_MOTOR_DATA_Typedef BM_motor_data;
 
 void BM_Drive(FDCAN_HandleTypeDef *hcan, uint16_t stdid ,int16_t speed, uint8_t ID);

@@ -12,9 +12,9 @@
 #include "IMU_Task.h"
 
 typedef struct {
-    DJI_MOTOR_Typedef Steer[4];  // 4个舵轮的舵向电机
-    DJI_MOTOR_Typedef Drive[4];  // 4个舵轮的驱动电机
-
+    PID_t Steer_P[4];  // 舵轮 PID 控制器
+    PID_t Steer_S[4];
+    PID_t Drive_S[4];
     PID_t PID_Vx;
     PID_t PID_Vy;
     PID_t PID_Vw;
@@ -24,8 +24,7 @@ typedef struct {
 } Chassis_Ctrl_Block_t;
 
 uint8_t Chassis_Control_Init(void);
-void Chassis_Control_Task(const Chassis_Motor_Group_t *p_motor,
-                          const IMU_Data_t *p_imu_repo,
-                          const DBUS_Typedef *p_dbus);
+void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
+                          const IMU_Data_t *c_imu);
 
 #endif //H7_FRAMEWORK_CHASSIS_CTRL_H

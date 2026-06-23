@@ -240,6 +240,38 @@ float PID_Calculate(PID_t *pid, float measure, float ref)
     return pid->Output;
 }
 
+/**
+ * @brief          清空PID历史状态与输出
+ * @param[*pid]    PID结构体指针
+ * @retval         返回清零后的输出 (0.0f)
+ */
+float PID_Clear(PID_t *pid)
+{
+    if (pid == NULL) {
+        return 0.0f;
+    }
+
+    // 1. 清空当前计算量
+    pid->Measure = 0.0f;
+    pid->Ref     = 0.0f;
+    pid->Err     = 0.0f;
+
+    // 2. 清空输出与各项中间结果
+    pid->Pout    = 0.0f;
+    pid->ITerm   = 0.0f;
+    pid->Dout    = 0.0f;
+    pid->Iout    = 0.0f;    // 【核心】清空累加积分，防止切回正常模式时出现积分饱和冲刺
+    pid->Output  = 0.0f;
+
+    // 3. 清空历史状态记录
+    pid->Last_Measure = 0.0f; // 【核心】防止微分先行 (Derivative_On_Measurement) 突变
+    pid->Last_Output  = 0.0f; // 防止输出滤波异常
+    pid->Last_Dout    = 0.0f; // 防止微分滤波异常
+    pid->Last_Err     = 0.0f; // 【核心】防止标准微分项计算 (Err - Last_Err) 产生巨大尖峰
+    pid->Last_ITerm   = 0.0f; // 防止梯形积分异常
+
+    return pid->Output;
+}
 static void f_Trapezoid_Intergral(PID_t *pid)
 {
     if (pid->FuzzyRule == NULL)
