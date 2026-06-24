@@ -78,6 +78,9 @@ endforeach()
 # 链接库
 add_subdirectory(cmake/stm32cubemx)
 
+if(NOT DSP_LIB)
+    message(WARNING "CMSIS-DSP Library (arm_cortexM7lfdp_math) not found!")
+endif()
 target_link_libraries(${CMAKE_PROJECT_NAME}
         stm32cubemx
         m

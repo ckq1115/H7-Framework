@@ -7,7 +7,7 @@
 
 #include "main.h"
 #include "tim.h"
-#include "controller.h"
+#include "Classic_Control.h"
 
 typedef enum
 {

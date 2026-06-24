@@ -2,6 +2,7 @@
 // Created by CaoKangqi on 2026/2/14.
 //
 #include "DM_Motor.h"
+#include <string.h>
 #include "All_define.h"
 
 /**
@@ -22,7 +23,6 @@ void DM_Standard_Resolve(void* instance, uint8_t *rx_data)
     DATA->v_int = (rx_data[3] << 4) | (rx_data[4] >> 4);
     DATA->t_int = ((rx_data[4] & 0xF) << 8) | rx_data[5];
 
-    // 映射到物理量
     DATA->pos = uint_to_float(DATA->p_int, P_MIN, P_MAX, 16);
     DATA->vel = uint_to_float(DATA->v_int, V_MIN, V_MAX, 12);
     DATA->tor = uint_to_float(DATA->t_int, T_MIN, T_MAX, 12);

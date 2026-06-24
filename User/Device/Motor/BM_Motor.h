@@ -2,7 +2,6 @@
 #define H7_FRAMEWORK_BM_MOTOR_H
 
 #include "main.h"
-#include "controller.h"
 #include "Offline_Detector.h"
 
 

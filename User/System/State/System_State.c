@@ -1,7 +1,3 @@
-//
-// Created by H7_Framework
-//
-
 #include "System_State.h"
 #include "Buzzer.h"
 #include "WS2812.h"
@@ -36,12 +32,14 @@ typedef struct {
     uint8_t total;
 } Flow_t;
 
-static const Flow_t Flow_Init = {
-    .steps = {
-        {1500, 80, RGB_CYAN}, {0, 30, RGB_OFF},
-        {2500, 120, RGB_CYAN}, {0, 50, RGB_OFF},
-        {1500, 80, RGB_CYAN}, {0, 30, RGB_OFF}, {2500, 120, RGB_CYAN}},
-    .total = 7
+static const Flow_t Flow_Init = {.steps = {
+    {880, 170,  RGB_RED},  // 880Hz (A5)
+    {0,   50,  RGB_CYAN},
+    {1100, 170, RGB_BLUE},  // 1100Hz (C#6)
+    {0,    50, RGB_BLUE},
+    {1320, 400, RGB_GREEN} // 1320Hz (E6)
+    },
+    .total = 5
 };
 static const Flow_t Flow_Hint = {.steps = {
     {2500, 120, RGB_GREEN},
@@ -291,6 +289,13 @@ static void Arbitrate_Global_Mode(uint32_t now) {
     }
 }
 
+static void Safe_Buzzer_Set(uint16_t freq) {
+    if (sys_state.task_health.IMU == STATUS_PREPARING && sys_state.global_mode != GLOBAL_INIT_STAGE) {
+        Buzzer_Off();
+    } else {
+        Buzzer_Set_Freq(freq);
+    }
+}
 
 static void Action_Push(const Flow_t *flow) {
     if (!flow || flow->total == 0) return;
@@ -303,7 +308,7 @@ static void Action_Push(const Flow_t *flow) {
     ctrl.is_running = true;
     ctrl.timer_ms = ctrl.steps[0].duration;
 
-    Buzzer_Set_Freq(ctrl.steps[0].freq);
+    Safe_Buzzer_Set(ctrl.steps[0].freq);
     WS2812_SetMode_Static(0, ctrl.steps[0].r, ctrl.steps[0].g, ctrl.steps[0].b);
 }
 
@@ -324,7 +329,7 @@ static void Build_And_Play_Module_Error(void) {
             for (int beep = 0; beep < offline_counts[i]; beep++) {
                 if (Flow_Dynamic_Error.total < MAX_FRAGMENTS - 2) {
                     Flow_Dynamic_Error.steps[Flow_Dynamic_Error.total++] = (Step_t){3000, 80, RGB_RED};
-                    Flow_Dynamic_Error.steps[Flow_Dynamic_Error.total++] = (Step_t){0, 80, RGB_OFF};
+                    Flow_Dynamic_Error.steps[Flow_Dynamic_Error.total++] = (Step_t){0, 60, RGB_OFF};
                 }
             }
             // 模块间间隔
@@ -364,6 +369,10 @@ void System_Trigger_Hint(void) {
 }
 
 void System_State_Ticks(void) {
+    if (sys_state.task_health.IMU == STATUS_PREPARING && sys_state.global_mode != GLOBAL_INIT_STAGE) {
+        Buzzer_Off();
+    }
+
     if (!ctrl.is_running) return;
 
     if (ctrl.timer_ms > 0) {
@@ -373,7 +382,9 @@ void System_State_Ticks(void) {
 
     if (++ctrl.idx < ctrl.total) {
         ctrl.timer_ms = ctrl.steps[ctrl.idx].duration;
-        Buzzer_Set_Freq(ctrl.steps[ctrl.idx].freq);
+
+        Safe_Buzzer_Set(ctrl.steps[ctrl.idx].freq);
+
         WS2812_SetMode_Static(0, ctrl.steps[ctrl.idx].r, ctrl.steps[ctrl.idx].g, ctrl.steps[ctrl.idx].b);
     } else {
         Buzzer_Off();

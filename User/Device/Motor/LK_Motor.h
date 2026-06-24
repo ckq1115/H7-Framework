@@ -5,7 +5,6 @@
 #ifndef H7_FRAMEWORK_LK_MOTOR_H
 #define H7_FRAMEWORK_LK_MOTOR_H
 
-#include "controller.h"
 #include "fdcan.h"
 #include "Offline_Detector.h"
 

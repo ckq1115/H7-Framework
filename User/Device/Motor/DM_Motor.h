@@ -6,7 +6,6 @@
 
 #include "BSP_FDCAN.h"
 #include "Horizon_MATH.h"
-#include "controller.h"
 #include "Offline_Detector.h"
 
 

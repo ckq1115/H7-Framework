@@ -83,7 +83,7 @@ void IMU_Temp_Control_Init(void)
 
     // 2. 初始化模糊规则参数
     Fuzzy_Rule_Init(&fuzzy_rule_temp, NULL, NULL, NULL,
-        -20.0f, 0.05f, 0.0f, // Kp, Ki, Kd Ratios
+        -20.0f, -0.05f, 0.0f, // Kp, Ki, Kd Ratios
         1.5f, // eStep
         0.125f // ecStep
         );

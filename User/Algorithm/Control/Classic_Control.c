@@ -1,7 +1,7 @@
 //
 // Created by CaoKangqi on 2026/1/19.
 //
-#include "controller.h"
+#include "Classic_Control.h"
 
 /******************************** FUZZY PID **********************************/
 static float FuzzyRuleKpRAW[7][7] = {

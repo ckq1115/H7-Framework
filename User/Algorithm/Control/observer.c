@@ -3,7 +3,7 @@
 //
 #include "observer.h"
 #include "BSP_DWT.h"
-#include "controller.h"
+#include "Classic_Control.h"
 
 /*************************LINEAR DISTURBANCE OBSERVER *************************/
 void LDOB_Init(

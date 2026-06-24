@@ -13,7 +13,6 @@
 
 static Chassis_Ctrl_Block_t chassis_ctrl;
 
-Swerve_Cfg_t S_Cfg;
 Swerve_State_t S_Now;
 
 static Subscriber_t *sys_state_sub;
@@ -42,7 +41,7 @@ static float Chassis_Power_Arbitrator(float base_power_limit,
  */
 uint8_t Chassis_Control_Init(void)
 {
-    Swerve_Init(&S_Cfg, &S_Now);
+    Swerve_Init(&S_Now);
 
     float PID_V_Param[3] = {8.0f, 0.0f, 0.0f};
     PID_Init(&chassis_ctrl.PID_Vx, 8.0f, 5.0f, PID_V_Param,
@@ -121,7 +120,7 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
     }
     chassis_ctrl.swerve_fb.gyro_vw = -c_imu->gyro[2];
 
-    Swerve_Forward_Calc(&S_Now, &chassis_ctrl.swerve_fb, &S_Cfg);
+    Swerve_Forward_Calc(&S_Now, &chassis_ctrl.swerve_fb);
 
     if (cmd.mode == CHASSIS_CMD_SAFE)
     {
@@ -148,7 +147,7 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
         Swerve_Inverse_Calc(&chassis_ctrl.swerve_cmd, &S_Now,
                             chassis_ctrl.PID_Vx.Output, chassis_ctrl.PID_Vy.Output, chassis_ctrl.PID_Vw.Output,
                             vx_tar, vy_tar, vw_tar,
-                            &chassis_ctrl.swerve_fb, &S_Cfg);
+                            &chassis_ctrl.swerve_fb);
 
         for (int i = 0; i < 4; i++)
         {

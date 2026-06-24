@@ -88,7 +88,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
+  __DSB(); __ISB();
   /* USER CODE END Init */
 
   /* Configure the system clock */
