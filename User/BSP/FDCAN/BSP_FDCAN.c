@@ -198,6 +198,21 @@ void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
     }
 }
 
+extern const Auto_CAN_Reg_t __start_CAN_Reg_Sec;
+extern const Auto_CAN_Reg_t __stop_CAN_Reg_Sec;
+
+void BSP_CAN_Auto_Init(void)
+{
+    const Auto_CAN_Reg_t *node = &__start_CAN_Reg_Sec;
+    for (; node < &__stop_CAN_Reg_Sec; node++)
+    {
+        // 注意：由于现在在 BSP 内部了，你可以直接操作 BSP_Hash_Table
+        // 甚至连 BSP_CAN_Register_Slot 这个函数都不用对外暴露了！
+        FDCAN_HandleTypeDef temp_hfdcan = { .Instance = node->instance };
+        BSP_CAN_Register_Slot(&temp_hfdcan, node->id, node->device_ptr, node->resolve);
+    }
+}
+
 #define CAN_HASH_SIZE       16
 #define CAN_HASH_MASK       (CAN_HASH_SIZE - 1)
 #define CAN_BUS_NUM         3

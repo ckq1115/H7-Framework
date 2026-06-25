@@ -1,29 +1,32 @@
-//
-// Created by CaoKangqi on 2026/6/19.
-//
-
 #ifndef H7_FRAMEWORK_BSP_TIM_H
 #define H7_FRAMEWORK_BSP_TIM_H
 
 #include "tim.h"
 
-/**
- * @brief 全车 PWM 硬件资源枚举（将硬件彻底标签化）
- */
+// 通道极性类型
 typedef enum {
-    PWM_WS2812 = 0,     // WS2812
-    PWM_BUZZER,         // 蜂鸣器
-    PWM_TEMP_CTRL,      // IMU温控加热
-    PWM_DEVICE_CNT      // 标记总数
-} PWM_Device_e;
+    PWM_CHANNEL_NORMAL = 0, // 普通正向通道 (CH1, CH2, CH3, CH4)
+    PWM_CHANNEL_COMP   = 1, // 高级定时器互补/反向通道 (CH1N, CH2N, CH3N)
+} BSP_PWM_Type_e;
 
-/* 初始化全车所有的定时器 PWM 通道 */
-void TIM_PWM_Init(void);
-/* 通用设置占空比（通过比较值 CCR） */
-void TIM_Set_Compare(PWM_Device_e device, uint32_t compare);
-/* 通用设置频率（通过修改自动重装载值 ARR，主要用于蜂鸣器变调） */
-void TIM_Set_Autoreload(PWM_Device_e device, uint32_t autoreload);
-void TIM_Set_Autoreload_Immediate(PWM_Device_e device, uint32_t autoreload, uint32_t compare);
-void WS2812_DMA_Handler(uint8_t half_cplt);
+// DMA 传输回调函数指针
+typedef void (*PWM_DMA_Callback_t)(uint8_t half_cplt);
+
+/**
+ * @brief PWM 对象句柄 (Device 层或 App 层持有此句柄)
+ */
+typedef struct {
+    TIM_HandleTypeDef *htim; // HAL 库定时器句柄
+    uint32_t channel;        // 定时器通道号 (如 TIM_CHANNEL_2)
+    BSP_PWM_Type_e type;     // 通道极性
+} BSP_PWM_t;
+
+void BSP_PWM_Start(BSP_PWM_t *pwm);
+void BSP_PWM_Stop(BSP_PWM_t *pwm);
+void BSP_PWM_Set_Compare(BSP_PWM_t *pwm, uint32_t compare);
+void BSP_PWM_Set_Autoreload(BSP_PWM_t *pwm, uint32_t autoreload);
+void BSP_PWM_Set_Autoreload_Immediate(BSP_PWM_t *pwm, uint32_t autoreload, uint32_t compare);
+
+void BSP_PWM_Register_DMA_Callback(TIM_HandleTypeDef *htim, PWM_DMA_Callback_t callback);
 
 #endif //H7_FRAMEWORK_BSP_TIM_H

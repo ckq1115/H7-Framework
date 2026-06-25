@@ -32,6 +32,7 @@ static PID_Params_t current_pid;
 
 #define HEATER_PWM_MAX         500.0f
 
+BSP_PWM_t imu_heater_pwm = {&htim8,  TIM_CHANNEL_3, PWM_CHANNEL_COMP};
 IMU_CTRL_STATE_e imu_ctrl_state = TEMP_INIT;// 当前控制状态
 IMU_CTRL_FLAG_t  imu_ctrl_flag  = {0};// 控制状态标志
 PID_t imu_temp;
@@ -51,13 +52,11 @@ static Publisher_t* imu_pub = NULL;
  * @param pwm 目标PWM值 (0.0f - HEATER_PWM_MAX)
  * @note 该函数会自动进行限幅保护，确保PWM值在安全范围内
  */
-void Set_Heater_PWM(float pwm)
-{
+void Set_Heater_PWM(float pwm) {
     // 限幅保护
     pwm = (pwm < 0.0f) ? 0.0f : (pwm > HEATER_PWM_MAX) ? HEATER_PWM_MAX : pwm;
-    TIM_Set_Compare(PWM_TEMP_CTRL, pwm);
+    BSP_PWM_Set_Compare(&imu_heater_pwm, pwm);
 }
-
 /**
  * @brief 初始化PID结构体与模糊规则
  * @note  仅在系统启动或状态机复位时调用一次
@@ -137,7 +136,6 @@ void IMU_Update_Task(IMU_Data_t *IMU,float dt_s)
             break;
 
         case TEMP_PID_CTRL:
-            System_State_Report(ID_IMU,STATUS_PREPARING);
             if (fabsf(now_temp - IMU_TARGET_TEMP) < TEMP_STABLE_ERR)
             {
                 imu_ctrl_flag.temp_reached = 1;

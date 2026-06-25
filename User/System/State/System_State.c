@@ -37,7 +37,7 @@ static const Flow_t Flow_Init = {.steps = {
     {0,   50,  RGB_CYAN},
     {1100, 170, RGB_BLUE},  // 1100Hz (C#6)
     {0,    50, RGB_BLUE},
-    {1320, 400, RGB_GREEN} // 1320Hz (E6)
+    {1320, 300, RGB_GREEN} // 1320Hz (E6)
     },
     .total = 5
 };
@@ -224,7 +224,7 @@ static bool Check_Boot_Sequence(uint32_t now) {
 static void Update_Error_Flags(bool remote_is_online, bool in_boot_grace_period) {
     sys_state.error.bit.remote_lost  = !remote_is_online; // 直接赋值
     sys_state.error.bit.referee_lost = !pwr_info.ref_online;
-    sys_state.error.bit.imu_fault    = (sys_state.task_health.IMU == STATUS_ERROR || sys_state.task_health.IMU == STATUS_INIT);
+    sys_state.error.bit.imu_fault    = sys_state.task_health.IMU == STATUS_ERROR;
 
     if (Is_All_Tasks_Running() || in_boot_grace_period) {
         sys_state.error.bit.chassis_offline = 0;

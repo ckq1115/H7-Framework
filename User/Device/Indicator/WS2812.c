@@ -2,8 +2,9 @@
 // Created by CaoKangqi on 2026/1/23.
 //
 #include "WS2812.h"
-#include "BSP_TIM.h"
 #include <string.h>
+
+BSP_PWM_t ws2812_pwm     = {&htim3,  TIM_CHANNEL_2, PWM_CHANNEL_NORMAL};
 
 // 0-255 的无浮点正弦波表 (0 -> 255 -> 0)
 static const uint8_t Sine_Table[256] = {
@@ -78,6 +79,7 @@ void WS2812_Init(void)
         LED_Manage[i].param_ms = 0;
     }
     WS2812_Clear();
+    BSP_PWM_Register_DMA_Callback(ws2812_pwm.htim, WS2812_DMA_Handler);
 }
 
 void WS2812_SetPixel(uint16_t index, uint8_t r, uint8_t g, uint8_t b)
@@ -116,7 +118,7 @@ void WS2812_Send(void)
     }
 
     isSending = 1;
-    HAL_TIM_PWM_Start_DMA(&htim3, TIM_CHANNEL_2, (uint32_t *)DMA_Buffer, WS2812_DMA_BUF_LEN);
+    HAL_TIM_PWM_Start_DMA(ws2812_pwm.htim, ws2812_pwm.channel, (uint32_t *)DMA_Buffer, WS2812_DMA_BUF_LEN);
 }
 
 void WS2812_DMA_Handler(uint8_t half_cplt)
@@ -141,9 +143,9 @@ void WS2812_DMA_Handler(uint8_t half_cplt)
             send_pixel_idx++;
         }
         else {
-            HAL_TIM_PWM_Stop_DMA(&htim3, TIM_CHANNEL_2);
+            HAL_TIM_PWM_Stop_DMA(ws2812_pwm.htim, ws2812_pwm.channel);
             isSending = 0;
-            TIM_Set_Compare(PWM_WS2812, 0);
+            BSP_PWM_Set_Compare(&ws2812_pwm, 0);
         }
     }
 }

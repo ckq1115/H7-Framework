@@ -2,7 +2,8 @@
 // Created by CaoKangqi on 2026/6/21.
 //
 #include "Buzzer.h"
-#include "BSP_TIM.h"
+
+BSP_PWM_t buzzer_pwm     = {&htim12, TIM_CHANNEL_2, PWM_CHANNEL_NORMAL};
 
 typedef enum {
     BUZZER_IDLE = 0,
@@ -38,7 +39,7 @@ void Buzzer_Init(void)
 
 void Buzzer_Off(void)
 {
-    TIM_Set_Compare(PWM_BUZZER, 0);
+    BSP_PWM_Set_Compare(&buzzer_pwm, 0);
 }
 
 void Buzzer_Set_Freq(uint16_t frequency_hz)
@@ -49,6 +50,6 @@ void Buzzer_Set_Freq(uint16_t frequency_hz)
         // 基于 TIM12 1MHz 计数时钟
         uint32_t arr = 1000000 / frequency_hz - 1;
         uint32_t ccr = (arr + 1) / 2; // 50% 占空比
-        TIM_Set_Autoreload_Immediate(PWM_BUZZER, arr, ccr);
+        BSP_PWM_Set_Autoreload_Immediate(&buzzer_pwm, arr, ccr);
     }
 }

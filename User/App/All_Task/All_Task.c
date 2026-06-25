@@ -2,7 +2,7 @@
 // Created by CaoKangqi on 2026/6/14.
 //
 #include "All_Task.h"
-#include "All_Motor.h"
+#include "Robot_Config.h"
 #include "Buzzer.h"
 #include "Chassis_Ctrl.h"
 #include "DBUS.h"

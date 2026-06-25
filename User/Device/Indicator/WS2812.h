@@ -6,6 +6,7 @@
 #define H7_FRAMEWORK_WS2812_H
 
 #include <stdint.h>
+#include "BSP_TIM.h"
 
 #define WS2812_PWM_LOW      100
 #define WS2812_PWM_HIGH     235
@@ -13,7 +14,8 @@
 #define MAX_LED             1    // 车载 LED 灯珠总数
 #define WS2812_RESET_SLOTS  20   // Reset 信号所需的低电平双缓冲周期数量
 
-// 【新增】灯效模式枚举
+extern BSP_PWM_t ws2812_pwm;
+
 typedef enum {
     LED_MODE_STATIC = 0,   // 常亮 / 静态底色
     LED_MODE_BREATHING,    // 自动呼吸模式

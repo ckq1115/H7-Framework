@@ -1,10 +1,11 @@
 //
-// Created by CaoKangqi on 2026/2/14.
+// Created by CaoKangqi on 2026/6/25.
 //
 
-#ifndef G4_FRAMEWORK_ALL_MOTOR_H
-#define G4_FRAMEWORK_ALL_MOTOR_H
+#ifndef H7_FRAMEWORK_ROBOT_CONFIG_H
+#define H7_FRAMEWORK_ROBOT_CONFIG_H
 
+#include "BSP_TIM.h"
 #include "DJI_Motor.h"
 #include "DM_Motor.h"
 #include "LK_Motor.h"
@@ -34,7 +35,6 @@ extern Chassis_Motor_Group_t chassis_motors;
 extern Gimbal_Motor_Group_t  gimbal_motors;
 extern Shoot_Motor_Group_t   shoot_motors;
 
-uint8_t Motor_Stuck_Check(float current_feedback, float speed_feedback,
-                                 float energy_limit, float *p_stuck_energy);
+extern BSP_PWM_t imu_heater_pwm;
 
-#endif //G4_FRAMEWORK_ALL_MOTOR_H
+#endif //H7_FRAMEWORK_ROBOT_CONFIG_H

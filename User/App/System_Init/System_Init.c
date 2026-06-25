@@ -3,17 +3,16 @@
 //
 #include "System_Init.h"
 
-#include "All_Motor.h"
 #include "BSP_DWT.h"
 #include "BSP_FDCAN.h"
 #include "WS2812.h"
 #include "BMI088driver.h"
 #include "BSP_TIM.h"
+#include "BSP_UART.h"
 #include "Buzzer.h"
-#include "Comm_DualBoard.h"
-#include "Comm_Router.h"
 #include "System_State.h"
 #include "Robot_Cmd.h"
+#include "Robot_Config.h"
 
 uint32_t stm32_id[3];
 void Get_UID(uint32_t *uid) {
@@ -30,13 +29,11 @@ void System_Init() {
     FDCAN_Config(&hfdcan2, FDCAN_RX_FIFO1);
     FDCAN_Config(&hfdcan3, FDCAN_RX_FIFO0);
     //CAN设备初始化
-    CAN_Router_Init();
+    BSP_CAN_Auto_Init();
     //串口设备初始化
-    UART_Router_Init();
+    Auto_UART_Router_Init();
     //WS2812初始化
     WS2812_Init();
-    //BMI088初始化
-    BMI088_init();
     //蜂鸣器初始化
     Buzzer_Init();
     //TODO 这里不该出现HAL库代码的，偷个懒后面再改
@@ -48,7 +45,11 @@ void System_Init() {
 
     HAL_TIM_Base_Start_IT(&htim4);
     //PWM设备初始化
-    TIM_PWM_Init();
+    BSP_PWM_Start(&buzzer_pwm);
+    BSP_PWM_Start(&imu_heater_pwm);
+    //BSP_PWM_Start(&ws2812_pwm);
+    //BMI088初始化
+    BMI088_init();
     //系统状态监测初始化
     System_State_Init();
     //指令中心初始化

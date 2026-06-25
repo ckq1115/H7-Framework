@@ -7,7 +7,7 @@
 #include "cmsis_os2.h"
 
 #include "DBUS.h"
-#include "All_Motor.h"
+#include "Robot_Config.h"
 #include "IMU_Task.h"
 #include "Power_CAP.h"
 #include "Referee.h"

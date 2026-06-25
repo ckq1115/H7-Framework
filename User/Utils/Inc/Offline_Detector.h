@@ -24,11 +24,23 @@ typedef struct {
 } Offline_Check_t;
 
 typedef struct {
-    Offline_Check_t *node;  // 明确指向具体的 offline 变量地址
-    uint32_t timeout_ms;    // 超时阈值
-    Device_Group_e group;   // 所属分组
-} Offline_Route_t;
+    Offline_Check_t *node;
+    uint32_t timeout_ms;
+    Device_Group_e group;
+} Auto_Offline_Reg_t;
 
+#ifndef MACRO_CONCAT
+#define _MACRO_CONCAT_IMPL(a, b) a##b
+#define MACRO_CONCAT(a, b) _MACRO_CONCAT_IMPL(a, b)
+#endif
+
+#define EXPORT_OFFLINE_NODE(dev_node_ptr, timeout, group_name) \
+__attribute__((used, section("Offline_Reg_Sec"))) \
+static const Auto_Offline_Reg_t MACRO_CONCAT(_offline_reg_, __LINE__) = { \
+.node = dev_node_ptr, \
+.timeout_ms = timeout, \
+.group = group_name \
+}
 void Offline_Monitor(void);
 bool Is_Group_Online(Device_Group_e group);
 

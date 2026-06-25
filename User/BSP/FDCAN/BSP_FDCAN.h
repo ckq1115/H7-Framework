@@ -31,6 +31,30 @@ typedef struct {
 } BSP_CAN_Hash_Node_t;
 
 void BSP_CAN_Register_Slot(FDCAN_HandleTypeDef *hfdcan, uint32_t id, void *device_ptr, BSP_CAN_Callback_t callback);
+
+typedef struct {
+    FDCAN_GlobalTypeDef *instance;
+    uint32_t id;
+    void *device_ptr;
+    BSP_CAN_Callback_t resolve;
+} Auto_CAN_Reg_t;
+
+#ifndef MACRO_CONCAT
+#define _MACRO_CONCAT_IMPL(a, b) a##b
+#define MACRO_CONCAT(a, b) _MACRO_CONCAT_IMPL(a, b)
+#endif
+
+/* --- CAN 自动注册节点 --- */
+#define EXPORT_CAN_RX_NODE(instance_ptr, rx_id, dev_ptr_arg, callback) \
+__attribute__((used, section("CAN_Reg_Sec"))) \
+static const Auto_CAN_Reg_t MACRO_CONCAT(_can_reg_, __LINE__) = { \
+.instance = instance_ptr, \
+.id = rx_id, \
+.device_ptr = dev_ptr_arg, \
+.resolve = callback \
+}
+void BSP_CAN_Auto_Init(void); // 替代原来的 Auto_CAN_Router_Init
+
 typedef FDCAN_HandleTypeDef hcan_t;
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan, uint32_t fifo);
 extern uint8_t FDCAN_Send_Msg(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint8_t *data, uint32_t len);

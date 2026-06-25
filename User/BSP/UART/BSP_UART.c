@@ -4,7 +4,21 @@
 #include "stm32h7xx_hal.h"
 #include "BSP_UART.h"
 
-#define MAX_UART_BUS_NUM  11 // H723最大支持到 UART10 (索引使用10)
+extern const Auto_UART_Reg_t __start_UART_Reg_Sec;
+extern const Auto_UART_Reg_t __stop_UART_Reg_Sec;
+
+void Auto_UART_Router_Init(void)
+{
+    const Auto_UART_Reg_t *node = &__start_UART_Reg_Sec;
+    for (; node < &__stop_UART_Reg_Sec; node++)
+    {
+        BSP_UART_Register_Slot(node->huart, node->expected_size,
+                               node->rx_buf0, node->rx_buf1,
+                               node->dma_rx_size, node->device_ptr, node->resolve);
+    }
+}
+
+#define MAX_UART_BUS_NUM  11
 
 // 驱动内部私有的路由槽位映射表，完全由 BSP 层自己维护
 static BSP_UART_Slot_t BSP_UART_Table[MAX_UART_BUS_NUM] = {0};

@@ -6,8 +6,12 @@
 #include "System_State.h"
 #include "DBUS.h"
 #include "Aim_Vision.h"
+#include "All_define.h"
+#include "BSP_UART.h"
 #include "Horizon_MATH.h"
 #include "Comm_DualBoard.h"
+#include "Referee.h"
+#include "usart.h"
 #include "VT13.h"
 
 #define PITCH_MAX              25.0f
@@ -68,7 +72,7 @@ void Robot_Cmd_Update(void)
     if (dbus_sub)      SubGetMessage(dbus_sub, &dbus_data);
     if (vt13_sub)     SubGetMessage(vt13_sub, &vt13_data);
 
-    System_State_Set_Remote_Status(vt13_data.offline.is_online);//向系统状态模块传入遥控器在线状态
+    System_State_Set_Remote_Status(dbus_data.offline.is_online);//向系统状态模块传入遥控器在线状态
 
     if (sys_state.global_mode == GLOBAL_SAFE_LOCK ||
         sys_state.global_mode == GLOBAL_MODULE_ERROR ||

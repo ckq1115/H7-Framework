@@ -7,4 +7,6 @@
 
 #include "IMU_Task.h"
 
+void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+
 #endif //H7_FRAMEWORK_ALL_TASK_H
