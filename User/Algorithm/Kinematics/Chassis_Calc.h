@@ -57,7 +57,6 @@ typedef struct {
     float R;                // 旋转半径 (m)
     float r;                // 轮子半径 (m)
     float Swerve_offset[4]; // 舵轮零点偏角
-    float drive_dir[4];     // 轮子正转方向 (1或-1)
     float phi[4];           // 轮子安装方位角 (rad)
     float gear_d;           // 驱动电机减速比
 } Swerve_Cfg_t;
@@ -96,7 +95,6 @@ typedef struct {
     float steer_angle_rad[4];  // 舵轮当前连续绝对角度 (rad)
     float steer_rpm[4];
     float wheel_rpm[4];        // 驱动轮当前转速 (RPM)
-    float gyro_vw;             // 底盘当前实际角速度 (rad/s)
 } Swerve_Feedback_t;
 
 // 解算器输出的指令数据

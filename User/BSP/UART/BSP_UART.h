@@ -42,7 +42,7 @@ typedef struct {
 #define MACRO_CONCAT(a, b) _MACRO_CONCAT_IMPL(a, b)
 
 /* --- UART 自动注册节点 --- */
-#define EXPORT_UART_RX_NODE(huart_ptr, exp_size, buf0, buf1, dma_size, dev_ptr_arg, callback) \
+#define UART_RX_NODE(huart_ptr, exp_size, buf0, buf1, dma_size, dev_ptr_arg, callback) \
 __attribute__((used, section("UART_Reg_Sec"))) \
 static const Auto_UART_Reg_t MACRO_CONCAT(_uart_reg_, __LINE__) = { \
 .huart = huart_ptr, \

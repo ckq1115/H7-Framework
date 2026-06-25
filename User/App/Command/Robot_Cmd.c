@@ -72,7 +72,7 @@ void Robot_Cmd_Update(void)
     if (dbus_sub)      SubGetMessage(dbus_sub, &dbus_data);
     if (vt13_sub)     SubGetMessage(vt13_sub, &vt13_data);
 
-    System_State_Set_Remote_Status(dbus_data.offline.is_online);//向系统状态模块传入遥控器在线状态
+    System_State_Set_Remote_Status(vt13_data.offline.is_online);//向系统状态模块传入遥控器在线状态
 
     if (sys_state.global_mode == GLOBAL_SAFE_LOCK ||
         sys_state.global_mode == GLOBAL_MODULE_ERROR ||
@@ -123,7 +123,15 @@ static void Cmd_Update_Remote_Ctrl(void)
     chassis_cmd.target_vx = (float)dbus_data.Remote.CH1 * RC_ROCKER_XY_COEF + (float)vt13_data.Remote.Channel[1] * RC_ROCKER_XY_COEF;
     chassis_cmd.target_vy = (float)dbus_data.Remote.CH0 * RC_ROCKER_XY_COEF + (float)vt13_data.Remote.Channel[0] * RC_ROCKER_XY_COEF;
     float active_vw       = (float)dbus_data.Remote.CH2 * RC_ROCKER_VW_COEF + (float)vt13_data.Remote.Channel[3] * RC_ROCKER_VW_COEF;
+    gimbal_cmd.target_yaw   += (float)dbus_data.Remote.CH3 * RC_YAW_COEF + (float)vt13_data.Remote.Channel[2] * RC_YAW_COEF;
 
+    static uint8_t last_s1 = 0;
+    if (dbus_data.Remote.S1 == 1 && last_s1 != 3) {
+        shoot_cmd.trigger_single = true;
+    }else {
+        shoot_cmd.trigger_single = false;
+    }
+    last_s1 = dbus_data.Remote.S1;
     chassis_cmd.mode = CHASSIS_CMD_FREE;
     chassis_cmd.target_vw = active_vw;
 

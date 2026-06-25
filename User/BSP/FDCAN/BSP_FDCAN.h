@@ -45,7 +45,7 @@ typedef struct {
 #endif
 
 /* --- CAN 自动注册节点 --- */
-#define EXPORT_CAN_RX_NODE(instance_ptr, rx_id, dev_ptr_arg, callback) \
+#define CAN_RX_NODE(instance_ptr, rx_id, dev_ptr_arg, callback) \
 __attribute__((used, section("CAN_Reg_Sec"))) \
 static const Auto_CAN_Reg_t MACRO_CONCAT(_can_reg_, __LINE__) = { \
 .instance = instance_ptr, \

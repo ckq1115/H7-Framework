@@ -34,7 +34,7 @@ typedef struct {
 #define MACRO_CONCAT(a, b) _MACRO_CONCAT_IMPL(a, b)
 #endif
 
-#define EXPORT_OFFLINE_NODE(dev_node_ptr, timeout, group_name) \
+#define OFFLINE_NODE(dev_node_ptr, timeout, group_name) \
 __attribute__((used, section("Offline_Reg_Sec"))) \
 static const Auto_Offline_Reg_t MACRO_CONCAT(_offline_reg_, __LINE__) = { \
 .node = dev_node_ptr, \

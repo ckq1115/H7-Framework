@@ -118,7 +118,6 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
         chassis_ctrl.swerve_fb.steer_rpm[i]       = (float)c_motor->DJI_6020_Steer[i].Speed_now;
         chassis_ctrl.swerve_fb.wheel_rpm[i]       = (float)c_motor->DJI_3508_Chassis[i].Speed_now;
     }
-    chassis_ctrl.swerve_fb.gyro_vw = -c_imu->gyro[2];
 
     Swerve_Forward_Calc(&S_Now, &chassis_ctrl.swerve_fb);
 

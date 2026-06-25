@@ -4,6 +4,7 @@
 #include "All_Task.h"
 #include "Robot_Config.h"
 #include "Buzzer.h"
+#include "Catapult_Ctrl.h"
 #include "Chassis_Ctrl.h"
 #include "DBUS.h"
 #include "Message_Center.h"
@@ -49,6 +50,8 @@ void IMU_Task(void *argument)
 //运动控制任务 1000Hz
 static IMU_Data_t imu ={0};
 static Chassis_Motor_Group_t chassis_m = {0};
+static Gimbal_Motor_Group_t gimbal_m = {0};
+static Shoot_Motor_Group_t shoot_m = {0};
 void Motor_Task(void *argument)
 {
     (void)argument;
@@ -56,17 +59,26 @@ void Motor_Task(void *argument)
     const TickType_t xTimeIncrement = pdMS_TO_TICKS(1);//绝对延时1ms
 
     Subscriber_t *imu_sub = NULL;
-    Subscriber_t *motor_sub = NULL;
+    Subscriber_t *c_motor_sub = NULL;
+    Subscriber_t *g_motor_sub = NULL;
+    Subscriber_t *s_motor_sub = NULL;
 
     imu_sub = SubRegister("imu_data", sizeof(IMU_Data_t));
-    motor_sub = SubRegister("chassis_motors", sizeof(Chassis_Motor_Group_t));
+    c_motor_sub = SubRegister("chassis_motors", sizeof(Chassis_Motor_Group_t));
+    g_motor_sub = SubRegister("gimbal_motors", sizeof(Gimbal_Motor_Group_t));
+    s_motor_sub = SubRegister("shoot_motors", sizeof(Shoot_Motor_Group_t));
     Chassis_Control_Init();
+    Shoot_Control_Init();
     for(;;)
     {
         vTaskDelayUntil(&xLastWakeTime, xTimeIncrement);
 
         if (imu_sub) SubGetMessage(imu_sub, &imu);
-        if (motor_sub) SubGetMessage(motor_sub, &chassis_m);
+        if (c_motor_sub) SubGetMessage(c_motor_sub, &chassis_m);
+        if (g_motor_sub) SubGetMessage(g_motor_sub, &gimbal_m);
+        if (s_motor_sub)  SubGetMessage(s_motor_sub, &shoot_m);
+
+        Shoot_Control_Task(&shoot_motors, &gimbal_motors);
         Chassis_Control_Task(&chassis_m,&imu);
     }
 }

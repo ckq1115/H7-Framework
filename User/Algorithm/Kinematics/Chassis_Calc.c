@@ -155,9 +155,6 @@ uint8_t Swerve_Init(Swerve_State_t *state) {
     state->cfg.Swerve_offset[2] = 60.0f * DEG2RAD;
     state->cfg.Swerve_offset[3] = 60.0f * DEG2RAD;
 
-    state->cfg.drive_dir[0] = 1;  state->cfg.drive_dir[1] = -1;
-    state->cfg.drive_dir[2] = 1;  state->cfg.drive_dir[3] = -1;
-
     state->cfg.phi[0] = 0.262f * PI;  state->cfg.phi[1] = 0.738f * PI;
     state->cfg.phi[2] = 1.262f * PI;  state->cfg.phi[3] = 1.738f * PI;
 
@@ -166,7 +163,7 @@ uint8_t Swerve_Init(Swerve_State_t *state) {
 
 // 舵轮正解算
 void Swerve_Forward_Calc(Swerve_State_t *now, const Swerve_Feedback_t *fb) {
-    float b_x = 0, b_y = 0;
+    float b_x = 0, b_y = 0, b_w = 0;
 
     for (int i = 0; i < 4; i++) {
         now->wheel[i].v_wheel_now = (fb->wheel_rpm[i] * RPM_TO_RADS / now->cfg.gear_d) * now->cfg.r;
@@ -177,13 +174,14 @@ void Swerve_Forward_Calc(Swerve_State_t *now, const Swerve_Feedback_t *fb) {
         float vix = now->wheel[i].v_wheel_now * cosf(steer_chassis);
         float viy = now->wheel[i].v_wheel_now * sinf(steer_chassis);
 
-        b_x += vix + fb->gyro_vw * now->cfg.R * sinf(now->cfg.phi[i]);
-        b_y += viy - fb->gyro_vw * now->cfg.R * cosf(now->cfg.phi[i]);
+        b_x += now->wheel[i].v_wheel_now * cosf(now->wheel[i].theta_now);
+        b_y += now->wheel[i].v_wheel_now * sinf(now->wheel[i].theta_now);
+        b_w += (viy * sinf(now->cfg.phi[i]) - vix * cosf(now->cfg.phi[i])) / now->cfg.R;
     }
 
     now->vx = b_x / 4.0f;
     now->vy = b_y / 4.0f;
-    now->vw = fb->gyro_vw;
+    now->vw = b_w / 4.0f;
 }
 
 // 舵轮逆解算
@@ -200,8 +198,8 @@ void Swerve_Inverse_Calc(Swerve_Command_t *cmd, Swerve_State_t *state,
     state->vw_target = vw;
 
     for (int i = 0; i < 4; i++) {
-        float vix = vx - state->cfg.R * vw * sinf(state->cfg.phi[i]) * state->cfg.drive_dir[i];
-        float viy = vy + state->cfg.R * vw * cosf(state->cfg.phi[i]) * state->cfg.drive_dir[i];
+        float vix = vx - state->cfg.R * vw * cosf(state->cfg.phi[i]);
+        float viy = vy + state->cfg.R * vw * sinf(state->cfg.phi[i]);
         float v_mag = sqrtf(vix * vix + viy * viy);
 
         float current_theta_motor = fb->steer_angle_rad[i];
@@ -231,11 +229,11 @@ void Swerve_Inverse_Calc(Swerve_Command_t *cmd, Swerve_State_t *state,
         cmd->target_wheel_rpm[i] = (state->wheel[i].v_wheel_target / state->cfg.r) * state->cfg.gear_d / RPM_TO_RADS;
 
         // 动力学前馈解算
-        float F_ix = (state->cfg.m * ax - state->cfg.drive_dir[i] * (state->cfg.J * aw / state->cfg.R) * sinf(state->cfg.phi[i])) / 4.0f;
-        float F_iy = (state->cfg.m * ay + state->cfg.drive_dir[i] * (state->cfg.J * aw / state->cfg.R) * cosf(state->cfg.phi[i])) / 4.0f;
+        float F_ix = (state->cfg.m * ax - state->cfg.J * aw / state->cfg.R * cosf(state->cfg.phi[i])) / 4.0f;
+        float F_iy = (state->cfg.m * ay + state->cfg.J * aw / state->cfg.R * sinf(state->cfg.phi[i])) / 4.0f;
         float F_drive = F_ix * cosf(current_theta_chassis) + F_iy * sinf(current_theta_chassis);
 
-        state->wheel[i].ff_out = speed_dir * (F_drive * state->cfg.r) * M3508_NM_TO_RAW * state->cfg.drive_dir[i];
+        state->wheel[i].ff_out = speed_dir * (F_drive * state->cfg.r) * M3508_NM_TO_RAW;
 
         cmd->ff_torque_raw[i] = state->wheel[i].ff_out;
     }
