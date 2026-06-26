@@ -38,7 +38,7 @@ static Publisher_t *gimbal_cmd_pub;
 static Publisher_t *shoot_cmd_pub;
 
 // --- 本地静态内存缓存 ---
-static System_State_t sys_state;
+static System_State_t cmd_sys_state;
 static DBUS_Typedef dbus_data;
 static VT13_Typedef vt13_data;
 
@@ -68,24 +68,22 @@ void Robot_Cmd_Init(void)
 
 void Robot_Cmd_Update(void)
 {
-    if (sys_state_sub) SubGetMessage(sys_state_sub, &sys_state);
+    if (sys_state_sub) SubGetMessage(sys_state_sub, &cmd_sys_state);
     if (dbus_sub)      SubGetMessage(dbus_sub, &dbus_data);
     if (vt13_sub)     SubGetMessage(vt13_sub, &vt13_data);
 
-    System_State_Set_Remote_Status(vt13_data.offline.is_online);//向系统状态模块传入遥控器在线状态
+    System_State_Set_Remote_Status(vt13_data.offline.is_online || dbus_data.offline.is_online);//向系统状态模块传入遥控器在线状态
 
-    if (sys_state.global_mode == GLOBAL_SAFE_LOCK ||
-        sys_state.global_mode == GLOBAL_MODULE_ERROR ||
-        sys_state.global_mode == GLOBAL_STANDBY)
+    if (cmd_sys_state.global_mode == GLOBAL_SAFE_LOCK ||
+        cmd_sys_state.global_mode == GLOBAL_MODULE_ERROR ||
+        cmd_sys_state.global_mode == GLOBAL_STANDBY)
     {
         Cmd_Handle_Safe_Mode();
     }
     if (dbus_data.Ctrl_Mode == 1) {
         Cmd_Update_Mouse_Key();
     }
-    else if (dbus_data.Remote.S2 == 1) {
-        //System_Trigger_Notify(GLOBAL_SAFE_LOCK);
-    } else {
+    else {
         Cmd_Update_Remote_Ctrl();
     }
 

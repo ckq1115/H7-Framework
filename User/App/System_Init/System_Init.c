@@ -13,6 +13,7 @@
 #include "System_State.h"
 #include "Robot_Cmd.h"
 #include "Robot_Config.h"
+#include "System_Indicator.h"
 
 uint32_t stm32_id[3];
 void Get_UID(uint32_t *uid) {
@@ -51,6 +52,7 @@ void System_Init() {
     //BMI088初始化
     BMI088_init();
     //系统状态监测初始化
+    System_Indicator_Init();
     System_State_Init();
     //指令中心初始化
     Robot_Cmd_Init();

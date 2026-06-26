@@ -66,11 +66,11 @@ typedef struct {
     float    bullet_speed;     // 最新一次射击的弹丸初速度 (m/s)
 } System_State_t;
 
+extern System_State_t sys_state;
+
 void System_State_Init(void);
 void System_State_Report(Module_ID_e id, App_Status_e status);
 void System_State_Update(void);
-void System_Trigger_Notify(Global_Mode_e mode);
-void System_Trigger_Hint(void);
-void System_State_Ticks(void);
 void System_State_Set_Remote_Status(bool is_online);
+
 #endif // SYSTEM_STATE_H

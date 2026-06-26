@@ -11,7 +11,7 @@
 #include "Robot_Cmd.h"
 #include "System_State.h"
 #include "WS2812.h"
-
+#include "System_Indicator.h"
 //指令中心任务 200Hz
 void Command_Task(void *argument)
 {
@@ -91,6 +91,7 @@ void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         DWT_SysTimeUpdate();
         Offline_Monitor();
         System_State_Update();
-        System_State_Ticks();
+        //System_State_Ticks();
+        System_Indicator_Ticks();
     }
 }

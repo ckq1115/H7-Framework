@@ -109,8 +109,8 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
         BSP_PWM_Set_Compare(&trigger_pwm, 1200);
 
         // 强行发送 0 电流
-        DJI_Motor_Send(&hfdcan2, 0x200, 0, 0, 0, 0);
-        DM_Motor_Send(&hfdcan2, 0x3FE, 0, 0, 0, 0);
+        DJI_Motor_Send(&hfdcan3, 0x200, 0, 0, 0, 0);
+        DM_Motor_Send(&hfdcan3, 0x3FE, 0, 0, 0, 0);
         return;
     }
 
@@ -123,7 +123,7 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
 
         case CALIB_MOVING:
             PID_Calculate(&shoot_ctrl.PID_Yaw_S, g_motor->DJI_3508_Yaw.Speed_now, 500.0f);
-            DJI_Motor_Send(&hfdcan2, 0x200, 0, 0, shoot_ctrl.PID_Yaw_S.Output, 0);
+            DJI_Motor_Send(&hfdcan3, 0x200, 0, 0, shoot_ctrl.PID_Yaw_S.Output, 0);
 
             if (Check_Motor_Reached_Limit(&g_motor->DJI_3508_Yaw, 500.0f, 3000.0f, 80)) {
                 shoot_ctrl.calib_state = CALIB_DONE;
@@ -131,7 +131,7 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
             return; // 校准期间不执行后续发射逻辑
 
         case CALIB_DONE:
-            DJI_Motor_Send(&hfdcan2, 0x200, 0, 0, 0, 0); // 停转卸力
+            DJI_Motor_Send(&hfdcan3, 0x200, 0, 0, 0, 0); // 停转卸力
             shoot_ctrl.PID_Yaw_S.Iout = 0.0f;
 
             shoot_ctrl.zero_offset_angle = g_motor->DJI_3508_Yaw.Angle_Infinite;
@@ -242,7 +242,6 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
         pull_output = shoot_ctrl.PID_Pull_S.Output;
     }
 
-    // 统一发送底层控制流 (假设 Friction 等其他控制未来也会填补进来)
     DM_Motor_Send(&hfdcan3, 0x3FE, -shoot_ctrl.PID_Feed_S.Output, 0, 0, 0);
     DJI_Motor_Send(&hfdcan3, 0x200, 0, pull_output, shoot_ctrl.PID_Yaw_S.Output, 0);
 }
