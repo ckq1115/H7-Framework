@@ -72,7 +72,7 @@ void Robot_Cmd_Update(void)
     if (dbus_sub)      SubGetMessage(dbus_sub, &dbus_data);
     if (vt13_sub)     SubGetMessage(vt13_sub, &vt13_data);
 
-    System_State_Set_Remote_Status(vt13_data.offline.is_online || dbus_data.offline.is_online);//向系统状态模块传入遥控器在线状态
+    System_State_Report_Remote(vt13_data.offline.is_online || dbus_data.offline.is_online);//向系统状态模块传入遥控器在线状态
 
     if (cmd_sys_state.global_mode == GLOBAL_SAFE_LOCK ||
         cmd_sys_state.global_mode == GLOBAL_MODULE_ERROR ||

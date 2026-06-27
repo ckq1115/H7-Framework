@@ -7,9 +7,9 @@
 #include "Message_Center.h"
 #include "Power_CAP.h"
 #include "Power_Ctrl.h"
+#include "Referee.h"
 #include "System_State.h"
 #include "Robot_Cmd.h"
-
 
 static Chassis_Ctrl_Block_t chassis_ctrl;
 
@@ -18,10 +18,12 @@ Swerve_State_t S_Now;
 static Subscriber_t *sys_state_sub;
 static Subscriber_t *chassis_cmd_sub;
 static Subscriber_t *cap_sub;
+static Subscriber_t *referee_sub;
 
 static System_State_t local_sys_state;
 static Chassis_Cmd_t cmd = {0};
 static Cap_t local_cap_data;
+static Referee_Data_t chassis_referee;
 //功率控制
 static Power_Ctrl_t chassis_model;
 static Motor_Power_State_t m_states[8];//底盘共8个电机
@@ -44,14 +46,11 @@ uint8_t Chassis_Control_Init(void)
     Swerve_Init(&S_Now);
 
     float PID_V_Param[3] = {8.0f, 0.0f, 0.0f};
-    PID_Init(&chassis_ctrl.PID_Vx, 8.0f, 5.0f, PID_V_Param,
-        0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
-    PID_Init(&chassis_ctrl.PID_Vy, 8.0f, 5.0f, PID_V_Param,
-        0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
+    PID_Init(&chassis_ctrl.PID_Vx, 8.0f, 5.0f, PID_V_Param,0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
+    PID_Init(&chassis_ctrl.PID_Vy, 8.0f, 5.0f, PID_V_Param,0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
 
     float PID_Vw_Param[3] = {2.0f, 0.0f, 0.0f};
-    PID_Init(&chassis_ctrl.PID_Vw, 8.0f, 8.0f, PID_Vw_Param,
-        0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
+    PID_Init(&chassis_ctrl.PID_Vw, 8.0f, 8.0f, PID_Vw_Param,0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
 
     float PID_6020_Pos[3] = {800.0f, 0.0f, 0.0f};
     float PID_6020_Spd[3] = {85.0f,  0.0f, 0.0f};
@@ -69,9 +68,7 @@ uint8_t Chassis_Control_Init(void)
         PID_Init(&chassis_ctrl.Drive_S[i], 16384.0f, 3000.0f, PID_3508_Spd,
             0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
     }
-
     Power_Ctrl_Init(&chassis_model);
-
     for(int i=0; i<4; i++) {
         // 配置驱动轮节点 (绑定 3508 模型)
         drive_nodes[i].state = &m_states[i];
@@ -94,7 +91,7 @@ uint8_t Chassis_Control_Init(void)
     sys_state_sub   = SubRegister("system_state", sizeof(System_State_t));
     chassis_cmd_sub = SubRegister("chassis_cmd", sizeof(Chassis_Cmd_t));
     cap_sub         = SubRegister("supercap_data", sizeof(Cap_t));
-
+    referee_sub     = SubRegister("referee_data", sizeof(Referee_Data_t));
     return 1;
 }
 
@@ -111,6 +108,7 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
     SubGetMessage(sys_state_sub, &local_sys_state);
     if (chassis_cmd_sub) SubGetMessage(chassis_cmd_sub, &cmd);
     if (cap_sub) SubGetMessage(cap_sub, &local_cap_data);
+    if (referee_sub) SubGetMessage(referee_sub, &chassis_referee);
     System_State_Report(ID_CHASSIS, STATUS_RUN);
 
     for (int i = 0; i < 4; i++) {
@@ -132,6 +130,8 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
             PID_Clear(&chassis_ctrl.Steer_S[i]);
             PID_Clear(&chassis_ctrl.Drive_S[i]);
         }
+        DJI_Motor_Send(&hfdcan1, 0x200,0,0,0,0);
+        DJI_Motor_Send(&hfdcan2, 0x1FE,0,0,0,0);
     }
     else
     {
@@ -180,11 +180,9 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
 
         bool trigger_discharge = false;
 
-        float final_limit = Chassis_Power_Arbitrator(local_sys_state.power_limit,
-                                                     local_sys_state.buffer_energy,
-                                                     1,
-                                                     &local_cap_data,
-                                                     &trigger_discharge);
+        float final_limit = Chassis_Power_Arbitrator(chassis_referee.robot_status.chassis_power_limit,
+                                                     chassis_referee.power_heat_data.buffer_energy,
+                                                     1,&local_cap_data,&trigger_discharge);
 
         Power_Ctrl_Calculate(&chassis_model, final_limit, pwr_groups, 2);
 
@@ -195,9 +193,9 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
 
         Power_Cap_Tx(&hfdcan3, 0x282,
                      trigger_discharge,
-                     local_sys_state.power_limit,
-                     (uint8_t)local_sys_state.buffer_energy,
-                     local_sys_state.remain_HP);
+                     final_limit,
+                     (uint8_t)chassis_referee.power_heat_data.buffer_energy,
+                     chassis_referee.robot_status.current_HP);
     }
     //电流发送
     if (!(local_sys_state.global_mode == GLOBAL_SAFE_LOCK ||
@@ -228,7 +226,6 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
 #define MIN_CAP_VOLTAGE     23.0f   // 超级电容最低放电阈值 (百分比)
 #define RAMP_CAP_VOLTAGE    27.0f   // 斜坡衰减开始阈值 (百分比)
 #define MAX_BOOST_POWER     150.0f  // 超级电容输出的最大冲刺功率 (W)
-
 
 /**
  * @brief 功率策略仲裁器

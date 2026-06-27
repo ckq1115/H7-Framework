@@ -33,7 +33,7 @@ static bool Is_All_Tasks_Running(void) {
             sys_state.task_health.Shoot   == STATUS_RUN);
 }
 
-void System_State_Set_Remote_Status(bool is_online) {
+void System_State_Report_Remote(bool is_online) {
     g_remote_is_online = is_online;
 }
 
@@ -60,34 +60,6 @@ void System_State_Update(void) {
     Referee_Data_t local_ref = {0};
 
     if (referee_sub) SubGetMessage(referee_sub, &local_ref);
-
-    if (local_ref.offline.is_online) {
-        sys_state.power_limit   = (float)local_ref.robot_status.chassis_power_limit;
-        sys_state.buffer_energy = (float)local_ref.power_heat_data.buffer_energy;
-        sys_state.robot_level   = local_ref.robot_status.robot_level;
-        sys_state.remain_HP     = local_ref.robot_status.current_HP;
-        sys_state.max_HP        = local_ref.robot_status.maximum_HP;
-
-        uint8_t id = local_ref.robot_status.robot_id;
-        if (id == 1 || id == 101) {
-            sys_state.shooter_heat = (float)local_ref.power_heat_data.shooter_42mm_barrel_heat;
-        } else {
-            sys_state.shooter_heat = (float)local_ref.power_heat_data.shooter_17mm_barrel_heat;
-        }
-        sys_state.shooter_limit = (float)local_ref.robot_status.shooter_barrel_heat_limit;
-        if (local_ref.shoot_data.initial_speed > 10.0f) {
-            sys_state.bullet_speed = local_ref.shoot_data.initial_speed;
-        }
-    } else {
-        sys_state.power_limit   = 45.0f;
-        sys_state.buffer_energy = 40.0f;
-        sys_state.robot_level   = 1;
-        sys_state.remain_HP     = 100;
-        sys_state.max_HP        = 100;
-        sys_state.shooter_heat  = 0.0f;
-        sys_state.shooter_limit = 100.0f;
-        sys_state.bullet_speed  = 15.0f;
-    }
 
     Update_Power_Status(now, &local_ref);
     bool in_boot_grace_period = !Check_Boot_Sequence(now);

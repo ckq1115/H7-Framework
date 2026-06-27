@@ -55,15 +55,6 @@ typedef struct {
     App_Health_Table_t  task_health;
     Global_Mode_e       global_mode;
     System_Error_Code_u error;
-
-    float    power_limit;      // 底盘功率上限 (W)
-    float    buffer_energy;    // 底盘当前缓冲能量 (J)
-    uint8_t  robot_level;      // 机器人当前等级 (1, 2, 3)
-    uint16_t remain_HP;        // 当前血量
-    uint16_t max_HP;           // 最大血量
-    float    shooter_heat;     // 枪口当前热量 (自动适配兵种)
-    float    shooter_limit;    // 枪口热量上限
-    float    bullet_speed;     // 最新一次射击的弹丸初速度 (m/s)
 } System_State_t;
 
 extern System_State_t sys_state;
@@ -71,6 +62,6 @@ extern System_State_t sys_state;
 void System_State_Init(void);
 void System_State_Report(Module_ID_e id, App_Status_e status);
 void System_State_Update(void);
-void System_State_Set_Remote_Status(bool is_online);
+void System_State_Report_Remote(bool is_online);
 
 #endif // SYSTEM_STATE_H
