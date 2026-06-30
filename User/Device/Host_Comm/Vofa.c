@@ -8,11 +8,28 @@
 #include "usbd_cdc_if.h"
 
 /**
+ * @brief 内部底层发送路由函数
+ * @param huart 目标串口句柄，为 NULL 时默认走 USB CDC
+ */
+static void VOFA_Transmit(UART_HandleTypeDef *huart, uint8_t *data, uint16_t len)
+{
+    if (huart == NULL) {
+        // 句柄为空，默认使用 USB CDC
+        CDC_Transmit_HS(data, len);
+    } else {
+        // 句柄不为空，使用指定的串口 DMA 发送
+        HAL_UART_Transmit_DMA(huart, data, len);
+    }
+}
+
+/**
  * @brief VOFA+ JustFloat 协议可变参数发送函数
+ * @param huart 串口句柄 (例如 &huart10)，填 NULL 走 USB CDC
  * @param channels_num 实际发送的通道数量 (1 ~ VOFA_MAX_CHANNELS)
  * @param ... 具体的 float 数据点
+ * @note 不是浮点要强转成浮点，不能传整型，变量数不要超过设置的通道数，超过了不会发，如果数量小于通道数，剩余的会默认发0，最大通道数为20
  */
-void VOFA_JustFloat(uint8_t channels_num, ...)
+void VOFA_JustFloat(UART_HandleTypeDef *huart, uint8_t channels_num, ...)
 {
     if (channels_num == 0 || channels_num > VOFA_MAX_CHANNELS) return;
 
@@ -34,16 +51,17 @@ void VOFA_JustFloat(uint8_t channels_num, ...)
     send_buf[tail_index + 2] = 0x80;
     send_buf[tail_index + 3] = 0x7F;
 
-    //HAL_UART_Transmit_DMA(&huart1,send_buf,tail_index + 4);
-    CDC_Transmit_HS(send_buf, tail_index + 4);
+    VOFA_Transmit(huart, send_buf, tail_index + 4);
 }
 
 /**
  * @brief VOFA+ FireWater 协议可变参数发送函数
- * @details 格式示例: "1.1,3.2,-0.6\n" 或者是 "ch_name:1.1,3.2\n"
- * 遇到换行符 '\n' 时 VOFA+ 才会渲染打印波形。
+ * @param huart 串口句柄 (例如 &huart10)，填 NULL 走 USB CDC
+ * @param channels_num 实际发送的通道数量
+ * @param ... 具体的 float 数据点
+ * @note 不是浮点要强转成浮点，不能传整型
  */
-void VOFA_FireWater(uint8_t channels_num, ...)
+void VOFA_FireWater(UART_HandleTypeDef *huart, uint8_t channels_num, ...)
 {
     if (channels_num == 0) return;
 
@@ -68,6 +86,5 @@ void VOFA_FireWater(uint8_t channels_num, ...)
     text_buf[str_len++] = '\n';
     text_buf[str_len]   = '\0';
 
-    //HAL_UART_Transmit_DMA(&huart1,(uint8_t*)text_buf, str_len);
-    CDC_Transmit_HS((uint8_t*)text_buf, str_len);
+    VOFA_Transmit(huart, (uint8_t*)text_buf, str_len);
 }

@@ -6,6 +6,7 @@
 #define H7_FRAMEWORK_ALL_TASK_H
 
 #include "IMU_Task.h"
+#include "stm32h7xx_hal_tim.h"
 
 void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 

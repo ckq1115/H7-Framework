@@ -53,7 +53,7 @@ static const Auto_CAN_Reg_t MACRO_CONCAT(_can_reg_, __LINE__) = { \
 .device_ptr = dev_ptr_arg, \
 .resolve = callback \
 }
-void BSP_CAN_Auto_Init(void); // 替代原来的 Auto_CAN_Router_Init
+void BSP_CAN_Auto_Init(void);
 
 typedef FDCAN_HandleTypeDef hcan_t;
 void FDCAN_Config(FDCAN_HandleTypeDef *hfdcan, uint32_t fifo);

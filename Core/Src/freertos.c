@@ -25,7 +25,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "All_Task.h"
 #include "Message_Center.h"
 /* USER CODE END Includes */
 

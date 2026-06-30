@@ -12,17 +12,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # 硬件架构配置
 set(CPU_FLAGS -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard)
 
-# 自动搜索源文件
-file(GLOB_RECURSE USER_SOURCES
-        CONFIGURE_DEPENDS
-        "User/*.c" "User/*.cpp" "User/*.s"
-)
+file(GLOB_RECURSE ALL_USER_SOURCES CONFIGURE_DEPENDS "User/*.c" "User/*.cpp" "User/*.s")
+set(USER_SOURCES ${ALL_USER_SOURCES})
+list(FILTER USER_SOURCES EXCLUDE REGEX "/User/App/")
 
-add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES}
-
-)
-
-# 自动递归包含头文件
+# 自动递归包含头文件，并剔除 App 目录路径
 file(GLOB_RECURSE ALL_H_FILES CONFIGURE_DEPENDS "User/*.h" "User/*.hpp" "Core/*.h" )
 set(ALL_INCLUDE_DIRS "")
 foreach(FILE_PATH ${ALL_H_FILES})
@@ -30,6 +24,9 @@ foreach(FILE_PATH ${ALL_H_FILES})
     list(APPEND ALL_INCLUDE_DIRS ${DIR_PATH})
 endforeach()
 list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
+list(FILTER ALL_INCLUDE_DIRS EXCLUDE REGEX "/User/App/")
+
+add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         ${ALL_INCLUDE_DIRS}
@@ -65,7 +62,13 @@ target_link_options(${CMAKE_PROJECT_NAME} PUBLIC
         $<$<CONFIG:Release>:-flto=auto>
 )
 
-# 自动查找 DSP 静态库
+#set(ACTIVE_APP "1_Catapult_Hero")
+set(ACTIVE_APP "2_Engineer")
+
+# 链接库
+add_subdirectory(cmake/stm32cubemx)
+add_subdirectory(User/App/${ACTIVE_APP})
+
 file(GLOB_RECURSE LIB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/*.a" "${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/*.a")
 set(DSP_LIB "")
 foreach(LIB ${LIB_FILES})
@@ -75,12 +78,10 @@ foreach(LIB ${LIB_FILES})
     endif()
 endforeach()
 
-# 链接库
-add_subdirectory(cmake/stm32cubemx)
-
 if(NOT DSP_LIB)
     message(WARNING "CMSIS-DSP Library (arm_cortexM7lfdp_math) not found!")
 endif()
+
 target_link_libraries(${CMAKE_PROJECT_NAME}
         stm32cubemx
         m

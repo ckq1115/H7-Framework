@@ -8,16 +8,29 @@
 #include "Chassis_Ctrl.h"
 #include "DBUS.h"
 #include "Message_Center.h"
+#include "Power_CAP.h"
+#include "Referee.h"
 #include "Robot_Cmd.h"
 #include "System_State.h"
 #include "WS2812.h"
 #include "System_Indicator.h"
+#include "../../../Device/Host_Comm/Vofa.h"
+#include "VT13.h"
 //指令中心任务 200Hz
 void Command_Task(void *argument)
 {
     (void)argument;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xTimeIncrement = pdMS_TO_TICKS(5);//绝对延时5ms
+    PubRegister("dbus_data",  &DBUS,      sizeof(DBUS));
+    PubRegister("vt13_data",  &VT13,      sizeof(VT13));
+    PubRegister("referee_data",  &Referee,      sizeof(Referee_Data_t));
+    PubRegister("imu_data",   &IMU_Data,  sizeof(IMU_Data));
+    PubRegister("cap_data",   &cap,  sizeof(cap));
+
+    PubRegister("chassis_motors", &chassis_motors, sizeof(Chassis_Motor_Group_t));
+    PubRegister("gimbal_motors",  &gimbal_motors,  sizeof(Gimbal_Motor_Group_t));
+    PubRegister("shoot_motors",   &shoot_motors,   sizeof(Shoot_Motor_Group_t));
 
     Robot_Cmd_Init();
     for(;;)
@@ -91,7 +104,7 @@ void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         DWT_SysTimeUpdate();
         Offline_Monitor();
         System_State_Update();
-        //System_State_Ticks();
         System_Indicator_Ticks();
+        VOFA_JustFloat(NULL, 5, 0.0f, 1.0f,2.0f);
     }
 }

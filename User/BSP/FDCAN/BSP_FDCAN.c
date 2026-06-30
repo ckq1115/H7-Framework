@@ -206,8 +206,6 @@ void BSP_CAN_Auto_Init(void)
     const Auto_CAN_Reg_t *node = &__start_CAN_Reg_Sec;
     for (; node < &__stop_CAN_Reg_Sec; node++)
     {
-        // 注意：由于现在在 BSP 内部了，你可以直接操作 BSP_Hash_Table
-        // 甚至连 BSP_CAN_Register_Slot 这个函数都不用对外暴露了！
         FDCAN_HandleTypeDef temp_hfdcan = { .Instance = node->instance };
         BSP_CAN_Register_Slot(&temp_hfdcan, node->id, node->device_ptr, node->resolve);
     }
@@ -245,7 +243,6 @@ void BSP_CAN_Register_Slot(FDCAN_HandleTypeDef *hfdcan, uint32_t id, void *devic
         hash_idx = (hash_idx + 1) & CAN_HASH_MASK;
         if (hash_idx == start_idx) return;
     }
-    // 填入纯净的抽象硬件映射数据
     BSP_Hash_Table[bus_idx][hash_idx].id = id;
     BSP_Hash_Table[bus_idx][hash_idx].device_ptr = device_ptr;
     BSP_Hash_Table[bus_idx][hash_idx].resolve = callback;

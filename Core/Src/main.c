@@ -30,8 +30,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "All_Task.h"
-#include "System_Init.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,7 +40,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+extern void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+extern void System_Init(void);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/

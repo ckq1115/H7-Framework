@@ -4,14 +4,8 @@
 
 #include "Message_Center.h"
 #include <string.h>
+#include "cmsis_gcc.h"
 #include "cmsis_os2.h"
-
-#include "DBUS.h"
-#include "Robot_Config.h"
-#include "IMU_Task.h"
-#include "Power_CAP.h"
-#include "Referee.h"
-#include "VT13.h"
 
 #define MAX_TOPICS      32
 #define MAX_NAME_LEN    32
@@ -74,7 +68,7 @@ static Real_Topic_t* Find_Or_Create_Topic(const char *name, size_t size) {
 }
 
 /**
- * @brief 注册发布频道（主要供消息中心初始化或任务初始化时绑定全局结构体）
+ * @brief 注册发布频道（由具体的任务或驱动自己调用）
  * @param name 消息频道的唯一名字 (例如 "imu_data")
  * @param external_ptr 指向外部全局结构体的指针 (例如 &IMU_Data)
  * @param size 数据结构体的大小
@@ -101,9 +95,7 @@ Subscriber_t* SubRegister(const char *name, size_t size) {
 }
 
 /**
- * @brief 推送/更新消息（任务中使用。注意：如果中断直接写了绑定内存，可不调用此函数）
- * @param pub_handle 发布者句柄
- * @param data 指向待推送的本地数据的指针
+ * @brief 推送/更新消息（任务中使用）
  */
 void PubPushMessage(Publisher_t *pub_handle, const void *data) {
     Real_Topic_t *t = (Real_Topic_t*)pub_handle;
@@ -121,8 +113,6 @@ void PubPushMessage(Publisher_t *pub_handle, const void *data) {
 
 /**
  * @brief 获取消息（应用层任务安全、高效率地获取最新数据）
- * @param sub_handle 订阅者句柄
- * @param buffer 本地接收变量的缓冲区指针
  */
 void SubGetMessage(Subscriber_t *sub_handle, void *buffer) {
     Real_Topic_t *t = (Real_Topic_t*)sub_handle;
@@ -139,20 +129,10 @@ void SubGetMessage(Subscriber_t *sub_handle, void *buffer) {
 }
 
 /**
- * @brief 消息中心集中初始化
+ * @brief 消息中心底层初始化（只初始化互斥锁，不负责业务数据的注册）
  */
 void Message_Center_Init(void) {
     if (g_center_mutex == NULL) {
         g_center_mutex = osMutexNew(NULL);
     }
-
-    PubRegister("dbus_data",  &DBUS,      sizeof(DBUS));
-    PubRegister("vt13_data",  &VT13,      sizeof(VT13));
-    PubRegister("referee_data",  &Referee,      sizeof(Referee_Data_t));
-    PubRegister("imu_data",   &IMU_Data,  sizeof(IMU_Data));
-    PubRegister("cap_data",   &cap,  sizeof(cap));
-
-    PubRegister("chassis_motors", &chassis_motors, sizeof(Chassis_Motor_Group_t));
-    PubRegister("gimbal_motors",  &gimbal_motors,  sizeof(Gimbal_Motor_Group_t));
-    PubRegister("shoot_motors",   &shoot_motors,   sizeof(Shoot_Motor_Group_t));
 }
