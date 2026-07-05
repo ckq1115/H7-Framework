@@ -41,6 +41,7 @@ void Command_Task(void *argument)
     }
 }
 
+DWT_Profiler_t ins_time;
 //IMU姿态解算任务 1000Hz
 void IMU_Task(void *argument)
 {
@@ -56,7 +57,9 @@ void IMU_Task(void *argument)
         vTaskDelayUntil(&xLastWakeTime, xTimeIncrement);
 
         imu_period_s = DWT_GetDeltaT(&INS_DWT_Count);
+        DWT_Profile_Start(&ins_time);
         IMU_Update_Task(&IMU_Data,imu_period_s);
+        DWT_Profile_Stop(&ins_time);
     }
 }
 
@@ -93,6 +96,7 @@ void Motor_Task(void *argument)
 
         Shoot_Control_Task(&shoot_motors, &gimbal_motors);
         Chassis_Control_Task(&chassis_m,&imu);
+        VOFA_JustFloat(NULL, 12, imu.pitch, imu.roll,imu.yaw,imu.temp,imu.accel[0],imu.accel[1],imu.accel[2],imu.gyro[0],imu.gyro[1],imu.gyro[2],ins_time.cost_us);
     }
 }
 
@@ -105,6 +109,5 @@ void MY_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         Offline_Monitor();
         System_State_Update();
         System_Indicator_Ticks();
-        VOFA_JustFloat(NULL, 5, 0.0f, 1.0f,2.0f);
     }
 }

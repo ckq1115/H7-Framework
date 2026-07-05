@@ -46,9 +46,8 @@ void System_Init() {
 
     HAL_TIM_Base_Start_IT(&htim4);
     //PWM设备初始化
-    BSP_PWM_Start(&buzzer_pwm);
+    //BSP_PWM_Start(&buzzer_pwm);
     BSP_PWM_Start(&imu_heater_pwm);
-    //BSP_PWM_Start(&ws2812_pwm);
     //BMI088初始化
     BMI088_init();
     //系统状态监测初始化

@@ -26,13 +26,32 @@ endforeach()
 list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
 list(FILTER ALL_INCLUDE_DIRS EXCLUDE REGEX "/User/App/")
 
-add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES})
+file(GLOB_RECURSE CMSIS_DSP_SOURCES
+        "Middlewares/Third_Party/CMSIS-DSP/Source/*/*.c"
+)
+
+set(CMSIS_DSP_MAIN_SOURCES "")
+foreach(SOURCE_FILE ${CMSIS_DSP_SOURCES})
+    # 获取文件名和所在目录名
+    get_filename_component(FILE_NAME ${SOURCE_FILE} NAME)
+    get_filename_component(DIR_NAME ${SOURCE_FILE} DIRECTORY)
+    get_filename_component(DIR_NAME ${DIR_NAME} NAME)
+
+    if(FILE_NAME STREQUAL "${DIR_NAME}.c")
+        list(APPEND CMSIS_DSP_MAIN_SOURCES ${SOURCE_FILE})
+    endif()
+endforeach()
+
+set(CMSIS_DSP_SOURCES ${CMSIS_DSP_MAIN_SOURCES})
+
+add_executable(${CMAKE_PROJECT_NAME} ${USER_SOURCES} ${CMSIS_DSP_SOURCES})
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         ${ALL_INCLUDE_DIRS}
         Core/Inc
         Drivers/CMSIS/Include
-        Drivers/CMSIS/DSP/Include
+        Middlewares/Third_Party/CMSIS-DSP/Include
+        Middlewares/Third_Party/CMSIS-DSP/PrivateInclude
         Drivers/CMSIS/Device/ST/STM32H7xx/Include
         Drivers/STM32H7xx_HAL_Driver/Inc
 )
@@ -62,30 +81,15 @@ target_link_options(${CMAKE_PROJECT_NAME} PUBLIC
         $<$<CONFIG:Release>:-flto=auto>
 )
 
-#set(ACTIVE_APP "1_Catapult_Hero")
-set(ACTIVE_APP "2_Engineer")
+set(ACTIVE_APP "1_Catapult_Hero")
+#set(ACTIVE_APP "2_Engineer")
 
-# 链接库
 add_subdirectory(cmake/stm32cubemx)
 add_subdirectory(User/App/${ACTIVE_APP})
-
-file(GLOB_RECURSE LIB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/*.a" "${CMAKE_CURRENT_SOURCE_DIR}/Middlewares/*.a")
-set(DSP_LIB "")
-foreach(LIB ${LIB_FILES})
-    if(LIB MATCHES "arm_cortexM7lfdp_math")
-        set(DSP_LIB ${LIB})
-        break()
-    endif()
-endforeach()
-
-if(NOT DSP_LIB)
-    message(WARNING "CMSIS-DSP Library (arm_cortexM7lfdp_math) not found!")
-endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
         stm32cubemx
         m
-        "${DSP_LIB}"
 )
 
 # 后处理

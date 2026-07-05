@@ -27,11 +27,15 @@ static void VOFA_Transmit(UART_HandleTypeDef *huart, uint8_t *data, uint16_t len
  * @param huart 串口句柄 (例如 &huart10)，填 NULL 走 USB CDC
  * @param channels_num 实际发送的通道数量 (1 ~ VOFA_MAX_CHANNELS)
  * @param ... 具体的 float 数据点
- * @note 不是浮点要强转成浮点，不能传整型，变量数不要超过设置的通道数，超过了不会发，如果数量小于通道数，剩余的会默认发0，最大通道数为20
+ * @note 不是浮点要强转成浮点，不能传整型，变量数不要超过设置的通道数，超过了不会发，如果数量小于通道数，剩余的会默认发0，最大通道数为16
  */
 void VOFA_JustFloat(UART_HandleTypeDef *huart, uint8_t channels_num, ...)
 {
     if (channels_num == 0 || channels_num > VOFA_MAX_CHANNELS) return;
+
+    if (huart != NULL) {
+        while (huart->hdmatx != NULL && HAL_DMA_GetState(huart->hdmatx) == HAL_DMA_STATE_BUSY);
+    }
 
     static uint8_t send_buf[(VOFA_MAX_CHANNELS * 4) + 4];
 

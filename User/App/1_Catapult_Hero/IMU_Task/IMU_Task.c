@@ -15,7 +15,7 @@
 #include "VQF_filter.h"
 
 
-#define IMU_TARGET_TEMP        40.0f     // 目标温度 (℃)
+#define IMU_TARGET_TEMP        42.0f     // 目标温度 (℃)
 #define TEMP_STABLE_ERR        0.5f     // 稳定判据误差
 #define TEMP_STABLE_TIME_MS    1500      // 稳定持续时间 (ms)
 #define GYRO_CALIB_SAMPLES     1000      // 陀螺仪采样样本数
@@ -26,11 +26,11 @@ typedef struct {
     float kd;
 } PID_Params_t;
 
-static const PID_Params_t base_pid = {180.0f, 0.02f, 0.0f};
+static const PID_Params_t base_pid = {150.0f, 0.25f, 0.0f};
 
 static PID_Params_t current_pid;
 
-#define HEATER_PWM_MAX         500.0f
+#define HEATER_PWM_MAX         400.0f
 
 BSP_PWM_t imu_heater_pwm = {&htim8,  TIM_CHANNEL_3, PWM_CHANNEL_COMP};
 IMU_CTRL_STATE_e imu_ctrl_state = TEMP_INIT;// 当前控制状态
@@ -66,7 +66,7 @@ void IMU_Temp_Control_Init(void)
     // 1. 初始化PID控制器基础配置
     PID_Init(&imu_temp,
             400.0f,               // MaxOut
-             45.0f,                // IntegralLimit
+             150.0f,                // IntegralLimit
              (float*)&base_pid,     // 指向初始参数
              7.5f,                  // CoefA
              1.0f,                  // CoefB
@@ -82,7 +82,7 @@ void IMU_Temp_Control_Init(void)
 
     // 2. 初始化模糊规则参数
     Fuzzy_Rule_Init(&fuzzy_rule_temp, NULL, NULL, NULL,
-        -20.0f, -0.05f, 0.0f, // Kp, Ki, Kd Ratios
+        -20.0f, -0.15f, 0.0f, // Kp, Ki, Kd Ratios
         1.5f, // eStep
         0.125f // ecStep
         );
