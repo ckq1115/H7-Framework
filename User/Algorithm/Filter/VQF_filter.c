@@ -342,9 +342,9 @@ void vqf_output(struct VQF_FILTER_t *f)
     float sinp = 2.0f * (q0 * q2 - q1 * q3);
     if (sinp > 1.0f) sinp = 1.0f;
     if (sinp < -1.0f) sinp = -1.0f;
-    f->pitch = asinf(sinp) * (180.0f / M_PIf);
-    f->roll = atan2f(2.0f * (q0 * q1 + q2 * q3), 1.0f - 2.0f * (q1 * q1 + q2 * q2)) * (180.0f / M_PIf);
-    f->yaw = atan2f(2.0f * (q1 * q2 + q0 * q3), 1.0f - 2.0f * (q2 * q2 + q3 * q3)) * (180.0f / M_PIf);
+    f->pitch = asinf(sinp) * RAD2DEG;
+    f->roll = atan2f(2.0f * (q0 * q1 + q2 * q3), 1.0f - 2.0f * (q1 * q1 + q2 * q2)) * RAD2DEG;
+    f->yaw = atan2f(2.0f * (q1 * q2 + q0 * q3), 1.0f - 2.0f * (q2 * q2 + q3 * q3)) * RAD2DEG;
 
     float yaw_diff = f->yaw - f->last_yaw;
     if (yaw_diff > 180.0f) {

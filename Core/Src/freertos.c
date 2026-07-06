@@ -52,7 +52,7 @@ osThreadId_t IMUHandle;
 const osThreadAttr_t IMU_attributes = {
   .name = "IMU",
   .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 /* Definitions for Motor */
 osThreadId_t MotorHandle;

@@ -2,8 +2,9 @@
 // Created by CaoKangqi on 2026/6/14.
 //
 #include "All_Task.h"
+
+#include "BSP_SPI.h"
 #include "Robot_Config.h"
-#include "Buzzer.h"
 #include "Catapult_Ctrl.h"
 #include "Chassis_Ctrl.h"
 #include "DBUS.h"
@@ -14,7 +15,7 @@
 #include "System_State.h"
 #include "WS2812.h"
 #include "System_Indicator.h"
-#include "../../../Device/Host_Comm/Vofa.h"
+#include "Vofa.h"
 #include "VT13.h"
 //指令中心任务 200Hz
 void Command_Task(void *argument)
@@ -41,28 +42,35 @@ void Command_Task(void *argument)
     }
 }
 
-DWT_Profiler_t ins_time;
-//IMU姿态解算任务 1000Hz
-void IMU_Task(void *argument)
-{
-    (void)argument;
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xTimeIncrement = pdMS_TO_TICKS(1);//绝对延时1ms
+static TaskHandle_t xIMUTaskHandle = NULL;
 
-    static uint32_t INS_DWT_Count = 0; // DWT计数基准
-    static float imu_period_s = 0.0f;
-    INS_DWT_Count = DWT->CYCCNT;
-    for(;;)
-    {
-        vTaskDelayUntil(&xLastWakeTime, xTimeIncrement);
-
-        imu_period_s = DWT_GetDeltaT(&INS_DWT_Count);
-        DWT_Profile_Start(&ins_time);
-        IMU_Update_Task(&IMU_Data,imu_period_s);
-        DWT_Profile_Stop(&ins_time);
+static void IMU_Interrupt_Handler(void) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (xIMUTaskHandle != NULL) {
+        xTaskNotifyFromISR(xIMUTaskHandle, 0, eIncrement, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 }
 
+static uint32_t INS_DWT_Count = 0;
+static float imu_period_s = 0.0f;
+DWT_Profiler_t ins_time;
+
+void IMU_Task(void *argument) {
+    (void)argument;
+    xIMUTaskHandle = xTaskGetCurrentTaskHandle();
+    // 向 BSP 层注册中断回调
+    BSP_SPI_RegisterIRQCallback(IMU_Interrupt_Handler);
+    INS_DWT_Count = DWT->CYCCNT;
+    for(;;) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        imu_period_s = DWT_GetDeltaT(&INS_DWT_Count);
+        DWT_Profile_Start(&ins_time);
+        IMU_Update_Task(&IMU_Data, imu_period_s);
+        DWT_Profile_Stop(&ins_time);
+        DWT_SysTimeUpdate();
+    }
+}
 //运动控制任务 1000Hz
 static IMU_Data_t imu ={0};
 static Chassis_Motor_Group_t chassis_m = {0};
@@ -96,7 +104,10 @@ void Motor_Task(void *argument)
 
         Shoot_Control_Task(&shoot_motors, &gimbal_motors);
         Chassis_Control_Task(&chassis_m,&imu);
-        VOFA_JustFloat(NULL, 12, imu.pitch, imu.roll,imu.yaw,imu.temp,imu.accel[0],imu.accel[1],imu.accel[2],imu.gyro[0],imu.gyro[1],imu.gyro[2],ins_time.cost_us);
+        VOFA_JustFloat(NULL, 13, IMU_Data.pitch, IMU_Data.roll,imu.yaw,IMU_Data.temp,
+            IMU_Data.accel[0],IMU_Data.accel[1],IMU_Data.accel[2],
+            IMU_Data.gyro[0],IMU_Data.gyro[1],IMU_Data.gyro[2],
+            ins_time.cost_us,imu_period_s);
     }
 }
 
