@@ -20,9 +20,9 @@ void Auto_UART_Router_Init(void)
 
 #define MAX_UART_BUS_NUM  11
 
-// 驱动内部私有的路由槽位映射表，完全由 BSP 层自己维护
+// 驱动路由槽位映射表
 static BSP_UART_Slot_t BSP_UART_Table[MAX_UART_BUS_NUM] = {0};
-static uint8_t g_uart_registered_mask[MAX_UART_BUS_NUM] = {0}; // 注册标记掩码
+static uint8_t g_uart_registered_mask[MAX_UART_BUS_NUM] = {0};
 
 /**
  * @brief 辅助函数：根据寄存器基地址快速获取数组索引
@@ -39,7 +39,7 @@ static inline uint8_t Get_UART_Bus_Index(UART_HandleTypeDef *huart)
     if (huart->Instance == UART8)   return 8;
     if (huart->Instance == UART9)   return 9;
     if (huart->Instance == USART10) return 10;
-    return 0; // 未知或未定义的串口
+    return 0;
 }
 
 /**
