@@ -3,10 +3,10 @@
 //
 #include "System_Init.h"
 
+#include "BMI088.h"
 #include "BSP_DWT.h"
 #include "BSP_FDCAN.h"
 #include "WS2812.h"
-#include "BMI088.h"
 #include "BSP_TIM.h"
 #include "BSP_UART.h"
 #include "Buzzer.h"
@@ -46,9 +46,8 @@ void System_Init() {
 
     HAL_TIM_Base_Start_IT(&htim4);
     //PWM设备初始化
-    BSP_PWM_Start(&buzzer_pwm);
+    //BSP_PWM_Start(&buzzer_pwm);
     BSP_PWM_Start(&imu_heater_pwm);
-    //BSP_PWM_Start(&ws2812_pwm);
     //BMI088初始化
     BMI088_Init();
     //系统状态监测初始化

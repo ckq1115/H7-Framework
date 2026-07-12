@@ -81,8 +81,10 @@ target_link_options(${CMAKE_PROJECT_NAME} PUBLIC
         $<$<CONFIG:Release>:-flto=auto>
 )
 
-set(ACTIVE_APP "1_Catapult_Hero")
+#set(ACTIVE_APP "1_Catapult_Hero")
 #set(ACTIVE_APP "2_Engineer")
+set(ACTIVE_APP "7_Sentry_Master")
+#set(ACTIVE_APP "7_Sentry_Slave")
 
 add_subdirectory(cmake/stm32cubemx)
 add_subdirectory(User/App/${ACTIVE_APP})
