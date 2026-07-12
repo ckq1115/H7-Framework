@@ -10,6 +10,7 @@
 #define TOTAL_SLOTS         6.0f
 #define FEED_ZERO_OFFSET    1325.0f
 #define COUNTS_PER_SHOT     (8192.0f / TOTAL_SLOTS)
+#define FEED_INIT_BIAS    150.0f
 
 // 静态实例化内部控制块
 static Shoot_Ctrl_Block_t shoot_ctrl = {0};
@@ -105,10 +106,6 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
         PID_Clear(&shoot_ctrl.PID_Pull_P);
         PID_Clear(&shoot_ctrl.PID_Pull_S);
 
-        // 关闭触发器 PWM
-        BSP_PWM_Set_Compare(&trigger_pwm, 1200);
-
-        // 强行发送 0 电流
         DJI_Motor_Send(&hfdcan3, 0x200, 0, 0, 0, 0);
         DM_Motor_Send(&hfdcan3, 0x3FE, 0, 0, 0, 0);
         return;
@@ -146,7 +143,7 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
     }
 
     // --- 确保 DM 电机已连接 ---
-    if (s_motor->DM4310_Feed.Angle_Infinite == 0.0f && s_motor->DM4310_Feed.Speed_now == 0.0f) {
+    if (!s_motor->DM4310_Feed.offline.is_online) {
         return;
     }
 
@@ -154,7 +151,7 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
     float current_pulse = s_motor->DM4310_Feed.Angle_Infinite;
 
     if (!shoot_ctrl.feed_motor.is_init) {
-        shoot_ctrl.feed_motor.target_pos_cnt = (int32_t)floorf((current_pulse - FEED_ZERO_OFFSET) / COUNTS_PER_SHOT);
+        shoot_ctrl.feed_motor.target_pos_cnt = (int32_t)floorf((current_pulse - FEED_ZERO_OFFSET + FEED_INIT_BIAS) / COUNTS_PER_SHOT);
         shoot_ctrl.feed_motor.smooth_ref = current_pulse;
         shoot_ctrl.feed_motor.is_init = true;
     }
@@ -191,7 +188,6 @@ void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
         case PULL_STATE_NORMAL:
             BSP_PWM_Set_Compare(&trigger_pwm, 1200);
             shoot_ctrl.PID_Pull_P.Ref += 200.0f;
-
             // 触发条件：微动开关触发 或 收到上位机/遥控器的触发指令
             if ((current_switch_v == GPIO_PIN_RESET && shoot_ctrl.last_switch_v == GPIO_PIN_SET) ||
                 (local_shoot_cmd.trigger_single))

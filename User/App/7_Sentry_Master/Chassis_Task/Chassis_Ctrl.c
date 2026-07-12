@@ -35,7 +35,8 @@ static float Chassis_Power_Arbitrator(float base_power_limit,
                                       float cur_buffer,
                                       bool boost_intent,
                                       const Cap_t *cap_data,
-                                      bool *out_discharge);
+                                      bool *out_discharge,
+                                      float *out_cap_limit);
 /**
  * @brief 底盘控制初始化
  * @param MOTOR 底盘电机总结构体指针
@@ -204,10 +205,11 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
         }
 
         bool trigger_discharge = false;
-
-        float final_limit = Chassis_Power_Arbitrator(chassis_referee.robot_status.chassis_power_limit,
-                                                     chassis_referee.power_heat_data.buffer_energy,
-                                                     1,&local_cap_data,&trigger_discharge);
+        float cap_board_limit = 0.0f;
+        float final_limit = Chassis_Power_Arbitrator(
+                                chassis_referee.robot_status.chassis_power_limit,
+                                chassis_referee.power_heat_data.buffer_energy,
+                                1, &local_cap_data, &trigger_discharge, &cap_board_limit);
 
         Power_Ctrl_Calculate(&chassis_model, final_limit, pwr_groups, 2);
 
@@ -216,11 +218,11 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
             chassis_ctrl.swerve_cmd.steer_I[i] = m_states[i+4].limited_cmd;
         }
 
-        Power_Cap_Tx(&hfdcan3, 0x282,
-                     trigger_discharge,
-                     final_limit,
-                     (uint8_t)chassis_referee.power_heat_data.buffer_energy,
-                     chassis_referee.robot_status.current_HP);
+        cap.set.Control.power_key     = trigger_discharge;
+        cap.set.Control.capPowerLimit = (uint8_t)cap_board_limit;
+        cap.set.Control.buffer_now    = (uint8_t)chassis_referee.power_heat_data.buffer_energy;
+        cap.set.Control.robot_state   = (chassis_referee.robot_status.current_HP > 0) ? 1 : 0;
+        Power_Cap_Tx(&hfdcan3, 0x252, &cap.set);
     }
     //电流发送
     if (!(local_sys_state.global_mode == GLOBAL_SAFE_LOCK ||
@@ -246,7 +248,7 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
 }
 
 // 超级电容与缓冲能量调参宏定义
-#define BUFFER_COMP_KP      2.0f    // 缓冲能量补偿的比例系数 (Kp)
+#define BUFFER_COMP_KP      2.5f    // 缓冲能量补偿的比例系数 (Kp)
 #define TARGET_BUFFER       40.0f   // 目标期望缓冲能量 (J)
 #define MIN_CAP_VOLTAGE     23.0f   // 超级电容最低放电阈值 (百分比)
 #define RAMP_CAP_VOLTAGE    27.0f   // 斜坡衰减开始阈值 (百分比)
@@ -259,26 +261,27 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor,
  * @param boost_intent      输入指令是否开启超电
  * @param cap_data          超级电容状态反馈 (包含在线状态、电量、故障码等)
  * @param out_discharge     [输出参数] 发送给超电是否开启
+ * @param out_cap_limit     [输出参数] 发送给超电的功率限制
  * * @return float            返回最终决定的目标功率上限 (W)
  */
 static float Chassis_Power_Arbitrator(float base_power_limit,
                                       float cur_buffer,
                                       bool boost_intent,
                                       const Cap_t *cap_data,
-                                      bool *out_discharge)
+                                      bool *out_discharge,
+                                      float *out_cap_limit)
 {
     // 公式: power_comp = -Kp * (目标缓冲 - 当前缓冲)
-    // 举例: 如果当前缓冲 cur_buffer 掉到了 20J (小于目标的40J)，算出来的 power_comp 就是负数 -40W。
-    // 作用: 缓冲越低，自动把机器人的可用功率砍得越狠，强行让能量回充，防止扣血。
     float power_comp = -BUFFER_COMP_KP * (TARGET_BUFFER - cur_buffer);
-    // 基础可用功率 = 裁判系统上限(比如45W) + 缓冲补偿(正数或负数)
-    float final_target_power = base_power_limit + power_comp;
+    float base_allowable_power = base_power_limit + power_comp;
+    // 发给电容的功率限制
+    *out_cap_limit = base_allowable_power;
+    // 电机的目标功率上限初始化为基础功率
+    float final_target_power = base_allowable_power;
     // 超级电容离线/硬件故障保护
-    // 如果电容 CAN 掉线了，或者电容上报了硬件故障码
     if (cap_data->get.offline.is_online == 0 || cap_data->get.cap_state != 0)
     {
         *out_discharge = false;
-        // 电容板虽然坏了/断了，但自身依旧需要耗电，为了防止超功率，主动减去 5W 。
         return final_target_power - 5.0f;
     }
     // 在线且正常状态下的 放电/充电 逻辑
@@ -291,16 +294,15 @@ static float Chassis_Power_Arbitrator(float base_power_limit,
                           (float)(RAMP_CAP_VOLTAGE - MIN_CAP_VOLTAGE);
             boost_allowance *= ratio;
         }
-        // 最终软件允许的功率上限 = 基础可用功率 + 超电补偿功率
+        // 最终允许的底盘功率上限 = 基础可用功率 + 超电补偿功率
         final_target_power += boost_allowance;
         *out_discharge = true;
     }
     else
     {
-        // 如果操作手没按 Shift，或者电量已经被榨干到了 23.0 以下：
-        // 作用：把这 5W 功率留给超级电容，让它利用这 5W 给自己缓慢充电。
-        final_target_power -= 5.0f;
+        // 留 4W 功率给超级电容充电
+        final_target_power -= 4.0f;
         *out_discharge = false;
     }
-    return final_target_power;
+    return final_target_power; // 返回给电机的最终功率限制
 }

@@ -45,9 +45,8 @@ void System_Init() {
     HAL_GPIO_WritePin(POWER_5V_GPIO_Port, POWER_5V_Pin, GPIO_PIN_SET);
 
     HAL_TIM_Base_Start_IT(&htim4);
-    //PWM设备初始化
-    //BSP_PWM_Start(&buzzer_pwm);
-    BSP_PWM_Start(&imu_heater_pwm);
+    HAL_TIM_Base_Start_IT(&htim6);
+    HAL_TIM_Base_Start_IT(&htim7);
     //BMI088初始化
     BMI088_Init();
     //系统状态监测初始化

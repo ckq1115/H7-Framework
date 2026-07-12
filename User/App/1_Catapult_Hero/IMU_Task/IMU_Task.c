@@ -61,6 +61,7 @@ void Set_Heater_PWM(float pwm) {
  */
 void IMU_Temp_Control_Init(void)
 {
+    BSP_PWM_Start(&imu_heater_pwm);
     // 初始化PID控制器
     PID_Init(&imu_temp,800.0f,250.0f,(float*)&base_pid,
              7.5f,0.0f,0.0f,0.0f,0,

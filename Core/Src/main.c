@@ -116,6 +116,8 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART10_UART_Init();
   MX_TIM8_Init();
+  MX_TIM6_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
   MX_USB_DEVICE_Init();
   System_Init();

@@ -124,7 +124,7 @@ static void Cmd_Update_Remote_Ctrl(void)
     gimbal_cmd.target_yaw   += (float)dbus_data.Remote.CH3 * RC_YAW_COEF + (float)vt13_data.Remote.Channel[2] * RC_YAW_COEF;
 
     static uint8_t last_s1 = 0;
-    if (dbus_data.Remote.S1 == 1 && last_s1 != 3) {
+    if (dbus_data.Remote.S1 == 1 && last_s1 == 3) {
         shoot_cmd.trigger_single = true;
     }else {
         shoot_cmd.trigger_single = false;
