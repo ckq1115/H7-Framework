@@ -133,13 +133,6 @@ void Omni_calc(float *wheel_rpm, float vx_temp, float vy_temp, float vr, OmniIni
 
 #define M3508_NM_TO_RAW ( (1.0f / (15.7647f * 0.0157f * 0.85f)) * (16384.0f / 20.0f) )
 
-static float normalize_to_pi(float angle) {
-    angle = fmodf(angle, 2.0f * PI);
-    if (angle > PI)  angle -= 2.0f * PI;
-    if (angle < -PI) angle += 2.0f * PI;
-    return angle;
-}
-
 uint8_t Swerve_Init(Swerve_State_t *state) {
     if (state == NULL) return 1;
     __builtin_memset(state, 0, sizeof(Swerve_State_t));
@@ -239,15 +232,94 @@ void Swerve_Inverse_Calc(Swerve_Command_t *cmd, Swerve_State_t *state,
     }
 }
 
-float CHASSIS_GET_MAX_TARGET(float MAX_POWER)
+uint8_t Swerve_Init2(Swerve_State_t2*state)
 {
-    if (MAX_POWER == 45)       return 0.03f * MAX_POWER;
-    else if (MAX_POWER == 50 || MAX_POWER == 200) return 0.04f * MAX_POWER;
-    else if (MAX_POWER == 55)  return 0.06f * MAX_POWER;
-    else if (MAX_POWER == 60 || MAX_POWER == 75)  return 0.08f * MAX_POWER;
-    else if (MAX_POWER == 65)  return 0.1f * MAX_POWER;
-    else if (MAX_POWER == 70)  return 0.09f * MAX_POWER;
-    else if (MAX_POWER == 80)  return 0.07f * MAX_POWER;
-    else if (MAX_POWER == 90 || MAX_POWER == 100) return 0.065f * MAX_POWER;
-    else                       return 0.1f * MAX_POWER;
+    if (state == NULL) return 1;
+    __builtin_memset(state, 0, sizeof(Swerve_State_t));
+
+    state->cfg.phi[0] = 3*PI/4;
+    state->cfg.phi[1] = PI/4;
+    state->cfg.phi[2]= -3*PI/4;
+    state->cfg.phi[3] = -PI/4;
+
+    state->cfg.Swerve_offset[0] = 150.0f * DEG2RAD;
+    state->cfg.Swerve_offset[1] = 150.0f * DEG2RAD;
+    state->cfg.Swerve_offset[2] = 150.0f * DEG2RAD;
+    state->cfg.Swerve_offset[3] = 150.0f * DEG2RAD;
+
+    state->cfg.direction=-1;
+
+    state->cfg.R = 0.29f;
+    state->cfg.r = 0.06f;
+    state->cfg.m = 24.0f;
+    state->cfg.J = 3.0f;
+    return 0;
+}
+
+void Swerve_Receive_Transform(Swerve_State_t2 *state, const Swerve_Feedback_t2 *fb) {
+    for (int i = 0; i < 4; i++) {
+        state->wheel[i].v_wheel_now = (fb->wheel_rpm[i] * RPM_TO_RADS/ state->cfg.gear_d);
+        state->wheel[i].v_theta_now = (fb->steer_rpm[i] * RPM_TO_RADS);
+
+        float steer_chassis = state->cfg.direction * (fb->steer_angle_encoder[i] * ENCODER_TO_RAD - state->cfg.Swerve_offset[i]);
+        state->wheel[i].theta_now = normalize_to_pi(steer_chassis);
+    }
+}
+
+void Swerve_Forward_Calc2(Swerve_State_t2 *now) {
+    float b_x = 0, b_y = 0, b_w = 0;
+
+    for (int i = 0; i < 4; i++) {
+        float vix = now->wheel[i].v_wheel_now * cosf(now->wheel[i].theta_now );
+        float viy = now->wheel[i].v_wheel_now * sinf(now->wheel[i].theta_now );
+
+        b_x += now->wheel[i].v_wheel_now * cosf(now->wheel[i].theta_now);
+        b_y += now->wheel[i].v_wheel_now * sinf(now->wheel[i].theta_now);
+        b_w += (viy * sinf(now->cfg.phi[i]) - vix * cosf(now->cfg.phi[i])) / now->cfg.R;
+    }
+
+    now->vx = b_x / 4.0f;
+    now->vy = b_y / 4.0f;
+    now->vw = b_w / 4.0f;
+}
+
+void Swerve_Inverse_Calc2(Swerve_State_t2*state) {
+    for (uint8_t i = 0; i < 4; i++) {
+        state->wheel[i].v_wheel_target=(state->vx*cosf(state->wheel[i].theta_now)
+                                        + state->vy*sinf(state->wheel[i].theta_now)
+                                        + state->vw*state->cfg.R*sinf(state->wheel[i].theta_now-state->cfg.phi[i]))/state->cfg.r;
+    }
+
+}
+void Wheel_Calculation(Swerve_State_t2*state){
+    for (uint8_t i = 0; i < 4; i++) {
+        state->wheel[i].wheel_torque_feedforward=
+                    state->cfg.r * (state->cfg.m * state->ax_target *cosf(state->wheel[i].theta_now)
+
+                    +state->cfg.m * state->ax_target * sinf(state->wheel[i].theta_now)
+
+                    +state->cfg.J * state->ax_target * sinf(state->wheel[i].theta_now - state->cfg.phi[i]))/(state->cfg.R*4) ;
+
+    }
+}
+
+void Yaw_Calculation(Swerve_State_t2*state)
+{
+    for (uint8_t i = 0; i < 4; i++) {
+        if (fabsf(state->vx_target-state->cfg.R*state->vw_target*sinf(state->cfg.phi[i])) <= 0.0001 && fabsf(state->vy_target+state->cfg.R*state->vw_target*cosf(state->cfg.phi[i])) <= 0.0001) {
+            state->wheel[i].theta_target=state->wheel[i].theta_now;
+        }
+        float angle_rad = atan2f(state->vy_target+state->cfg.R*state->vw_target*cosf(state->cfg.phi[i]) , state->vx_target-state->cfg.R*state->vw_target*sinf(state->cfg.phi[i]));
+        state->wheel[i].theta_target=state->wheel[i].theta_now+normalize_to_pi(angle_rad-state->wheel[i].theta_now);
+    }
+}
+
+#define NM_ENCODER_6020 (0.741f*16384.0f/3.0f)
+#define NM_ENCODER_3508 (0.3f*16384.0f*19.0f/20.0f/15.7f)
+
+void Swerve_Send_Transform(Swerve_State_t2*state, Swerve_Command_t2 *cmd) {
+    for (uint8_t i = 0; i < 4; i++) {
+        cmd->steer_I[i]=state->wheel[i].steer_torque_pid*NM_ENCODER_6020;
+        cmd->wheel_I[i]=(state->wheel[i].wheel_torque_feedforward+state->wheel[i].wheel_torque_pid)*NM_ENCODER_3508;
+    }
 }

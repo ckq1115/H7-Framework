@@ -2,11 +2,11 @@
 // Created by CaoKangqi on 2026/1/25.
 //
 #include "Horizon_MATH.h"
-
+#include "All_define.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdarg.h>
 #include "stm32h723xx.h"
 
 /************************************************************ 万能分隔符 **************************************************************
@@ -221,4 +221,11 @@ int16_t OneFilter1(int16_t now, int16_t last, float thresholdValue)
         return (int16_t)(now * 0.2f + last * 0.8f); // 突变抑制
     else
         return (int16_t)(now * alpha + last * (1.0f - alpha));
+}
+
+float normalize_to_pi(float angle) {
+    angle = fmodf(angle, 2.0f * PI);
+    if (angle > PI)  angle -= 2.0f * PI;
+    if (angle < -PI) angle += 2.0f * PI;
+    return angle;
 }
