@@ -10,7 +10,8 @@
 
 #include "Classic_Control.h"
 #include "Robot_Config.h"
-#include "Robot_Cmd.h"
+
+
 
 // --- 状态机枚举定义 ---
 typedef enum {
@@ -43,9 +44,15 @@ typedef struct {
 
     float    zero_offset_angle;
     float    mid_offset_angle;
-    uint16_t pull_delay_counter;
+    float    pull_timer_sec;
     uint8_t  last_switch_v;
     uint8_t  last_cmd_trigger;
+
+    // 输出缓存 (统一发包用)
+    int16_t  out_pull_curr;
+    int16_t  out_yaw_curr;
+    float    out_feed_torque;
+    uint16_t out_trigger_pwm;
 
     // 专属 PID 控制器
     PID_t PID_Feed_P;
@@ -58,6 +65,7 @@ typedef struct {
 
 uint8_t Shoot_Control_Init(void);
 void Shoot_Control_Task(const Shoot_Motor_Group_t *s_motor,
-                        const Gimbal_Motor_Group_t *g_motor);
+                        const Gimbal_Motor_Group_t *g_motor,
+                        float dt);
 
 #endif //H7_FRAMEWORK_CATAPULT_CTRL_H

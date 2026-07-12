@@ -163,7 +163,7 @@ void Swerve_Inverse_Calc(Swerve_Command_t *cmd, Swerve_State_t *state,
     }
 }
 
-uint8_t Swerve_Init2(Swerve_State_t2*state)
+__weak uint8_t Swerve_Init2(Swerve_State_t2*state)
 {
     if (state == NULL) return 1;
     __builtin_memset(state, 0, sizeof(Swerve_State_t));

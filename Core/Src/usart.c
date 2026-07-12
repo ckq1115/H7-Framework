@@ -30,8 +30,11 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart10;
 DMA_HandleTypeDef hdma_uart5_rx;
 DMA_HandleTypeDef hdma_uart7_rx;
+DMA_HandleTypeDef hdma_uart7_tx;
 DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
 DMA_HandleTypeDef hdma_usart10_tx;
+DMA_HandleTypeDef hdma_usart10_rx;
 
 /* UART5 init function */
 void MX_UART5_Init(void)
@@ -326,6 +329,27 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart7_rx);
 
+    /* UART7_TX Init */
+    hdma_uart7_tx.Instance = DMA2_Stream1;
+    hdma_uart7_tx.Init.Request = DMA_REQUEST_UART7_TX;
+    hdma_uart7_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_uart7_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_uart7_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_uart7_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_uart7_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_uart7_tx.Init.Mode = DMA_NORMAL;
+    hdma_uart7_tx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_uart7_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_uart7_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(uartHandle,hdmatx,hdma_uart7_tx);
+
+    /* UART7 interrupt Init */
+    HAL_NVIC_SetPriority(UART7_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(UART7_IRQn);
   /* USER CODE BEGIN UART7_MspInit 1 */
 
   /* USER CODE END UART7_MspInit 1 */
@@ -379,6 +403,27 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_usart1_rx);
 
+    /* USART1_TX Init */
+    hdma_usart1_tx.Instance = DMA2_Stream0;
+    hdma_usart1_tx.Init.Request = DMA_REQUEST_USART1_TX;
+    hdma_usart1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_usart1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart1_tx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart1_tx.Init.Mode = DMA_NORMAL;
+    hdma_usart1_tx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_usart1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_usart1_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(uartHandle,hdmatx,hdma_usart1_tx);
+
+    /* USART1 interrupt Init */
+    HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspInit 1 */
 
   /* USER CODE END USART1_MspInit 1 */
@@ -429,7 +474,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_usart10_tx.Init.MemInc = DMA_MINC_ENABLE;
     hdma_usart10_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
     hdma_usart10_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    hdma_usart10_tx.Init.Mode = DMA_CIRCULAR;
+    hdma_usart10_tx.Init.Mode = DMA_NORMAL;
     hdma_usart10_tx.Init.Priority = DMA_PRIORITY_LOW;
     hdma_usart10_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_usart10_tx) != HAL_OK)
@@ -439,6 +484,27 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     __HAL_LINKDMA(uartHandle,hdmatx,hdma_usart10_tx);
 
+    /* USART10_RX Init */
+    hdma_usart10_rx.Instance = DMA1_Stream7;
+    hdma_usart10_rx.Init.Request = DMA_REQUEST_USART10_RX;
+    hdma_usart10_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_usart10_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart10_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart10_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart10_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart10_rx.Init.Mode = DMA_CIRCULAR;
+    hdma_usart10_rx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_usart10_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_usart10_rx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(uartHandle,hdmarx,hdma_usart10_rx);
+
+    /* USART10 interrupt Init */
+    HAL_NVIC_SetPriority(USART10_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(USART10_IRQn);
   /* USER CODE BEGIN USART10_MspInit 1 */
 
   /* USER CODE END USART10_MspInit 1 */
@@ -489,6 +555,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
     /* UART7 DMA DeInit */
     HAL_DMA_DeInit(uartHandle->hdmarx);
+    HAL_DMA_DeInit(uartHandle->hdmatx);
+
+    /* UART7 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(UART7_IRQn);
   /* USER CODE BEGIN UART7_MspDeInit 1 */
 
   /* USER CODE END UART7_MspDeInit 1 */
@@ -509,6 +579,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
     /* USART1 DMA DeInit */
     HAL_DMA_DeInit(uartHandle->hdmarx);
+    HAL_DMA_DeInit(uartHandle->hdmatx);
+
+    /* USART1 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspDeInit 1 */
 
   /* USER CODE END USART1_MspDeInit 1 */
@@ -529,6 +603,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
     /* USART10 DMA DeInit */
     HAL_DMA_DeInit(uartHandle->hdmatx);
+    HAL_DMA_DeInit(uartHandle->hdmarx);
+
+    /* USART10 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(USART10_IRQn);
   /* USER CODE BEGIN USART10_MspDeInit 1 */
 
   /* USER CODE END USART10_MspDeInit 1 */

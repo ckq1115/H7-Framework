@@ -16,8 +16,6 @@ Chassis_Motor_Group_t chassis_motors;
 Gimbal_Motor_Group_t  gimbal_motors;
 Shoot_Motor_Group_t   shoot_motors;
 
-BSP_PWM_t trigger_pwm = {&htim4, TIM_CHANNEL_2, PWM_CHANNEL_NORMAL};
-
 UART_RX_NODE(&huart5, 18, DBUS_RX_DATA, NULL, 18, &DBUS, DBUS_Resolved);
 OFFLINE_NODE(&DBUS.offline, DBUS_OFFLINE_TIME, GROUP_NONE);
 
@@ -62,9 +60,6 @@ OFFLINE_NODE(&shoot_motors.DJI_3508_Pull.offline, MOTOR_OFFLINE_TIME, SHOOT);
 
 CAN_RX_NODE(FDCAN3, 0x203, &gimbal_motors.DJI_3508_Yaw, DJI_Motor_Resolve);
 OFFLINE_NODE(&gimbal_motors.DJI_3508_Yaw.offline, MOTOR_OFFLINE_TIME, GIMBAL);
-
-
-CAN_RX_NODE(FDCAN2, 0x500, &Rx_Data, DualBoard_CAN_Rx);
 
 CAN_RX_NODE(FDCAN3, 0x288, &cap, Power_Cap_Rx);
 OFFLINE_NODE(&cap.get.offline, CAP_OFFLINE_TIME, GROUP_NONE);

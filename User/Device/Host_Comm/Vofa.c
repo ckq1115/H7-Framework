@@ -34,10 +34,10 @@ void VOFA_JustFloat(UART_HandleTypeDef *huart, uint8_t channels_num, ...)
     if (channels_num == 0 || channels_num > VOFA_MAX_CHANNELS) return;
 
     if (huart != NULL) {
-        while (huart->hdmatx != NULL && HAL_DMA_GetState(huart->hdmatx) == HAL_DMA_STATE_BUSY);
+        while (huart->gState != HAL_UART_STATE_READY);
     }
-
-    static uint8_t send_buf[(VOFA_MAX_CHANNELS * 4) + 4];
+    
+    static uint8_t send_buf[(VOFA_MAX_CHANNELS * 4) + 4] __attribute__((section(".RAM_D2")));
 
     va_list args;
     va_start(args, channels_num);
@@ -69,7 +69,7 @@ void VOFA_FireWater(UART_HandleTypeDef *huart, uint8_t channels_num, ...)
 {
     if (channels_num == 0) return;
 
-    static char text_buf[VOFA_TEXT_BUF_SIZE];
+    static char text_buf[VOFA_TEXT_BUF_SIZE]__attribute__((section(".RAM_D2")));
     uint32_t str_len = 0;
 
     va_list args;

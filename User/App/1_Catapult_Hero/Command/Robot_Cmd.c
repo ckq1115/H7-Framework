@@ -46,7 +46,6 @@ static Chassis_Cmd_t chassis_cmd = {0};
 static Gimbal_Cmd_t gimbal_cmd = {0};
 static Shoot_Cmd_t shoot_cmd = {0};
 
-extern B2B_Tx_t Tx_Data;
 
 // --- 私有函数声明 ---
 static void Cmd_Handle_Safe_Mode(void);
@@ -72,7 +71,7 @@ void Robot_Cmd_Update(void)
     if (dbus_sub)      SubGetMessage(dbus_sub, &dbus_data);
     if (vt13_sub)     SubGetMessage(vt13_sub, &vt13_data);
 
-    System_State_Report_Remote(vt13_data.offline.is_online || dbus_data.offline.is_online);//向系统状态模块传入遥控器在线状态
+    System_State_Report_Remote(vt13_data.offline.is_online);//向系统状态模块传入遥控器在线状态
 
     if (cmd_sys_state.global_mode == GLOBAL_SAFE_LOCK ||
         cmd_sys_state.global_mode == GLOBAL_MODULE_ERROR ||
@@ -123,14 +122,14 @@ static void Cmd_Update_Remote_Ctrl(void)
     float active_vw       = (float)dbus_data.Remote.CH2 * RC_ROCKER_VW_COEF + (float)vt13_data.Remote.Channel[3] * RC_ROCKER_VW_COEF;
     gimbal_cmd.target_yaw   += (float)dbus_data.Remote.CH3 * RC_YAW_COEF + (float)vt13_data.Remote.Channel[2] * RC_YAW_COEF;
 
-    static uint8_t last_s1 = 0;
-    if (dbus_data.Remote.S1 == 1 && last_s1 == 3) {
+    if (vt13_data.Remote.mode_sw == 1 && vt13_data.Remote.fn_2 == 1) {
+        shoot_cmd.mode = SHOOT_CMD_FIRE;
         shoot_cmd.trigger_single = true;
     }else {
         shoot_cmd.trigger_single = false;
     }
-    last_s1 = dbus_data.Remote.S1;
     chassis_cmd.mode = CHASSIS_CMD_FREE;
+    shoot_cmd.mode = SHOOT_CMD_READY;
     chassis_cmd.target_vw = active_vw;
 
 }
@@ -163,5 +162,4 @@ static void Cmd_Update_Mouse_Key(void)
 static void Cmd_DualBoard_Sync(void)
 {
 
-    DualBoard_Send(LINK_CAN, &Tx_Data, sizeof(B2B_Tx_t));
 }

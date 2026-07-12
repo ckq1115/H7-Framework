@@ -53,7 +53,7 @@ uint8_t Chassis_Control_Init(void)
     float PID_Vw_Param[3] = {2.0f, 0.0f, 0.0f};
     PID_Init(&chassis_ctrl.PID_Vw, 8.0f, 8.0f, PID_Vw_Param,0, 0, 0, 0, 0, Integral_Limit | ErrorHandle);
 
-    float PID_6020_Pos[3] = {800.0f, 0.0f, 0.0f};
+    float PID_6020_Pos[3] = {500.0f, 0.0f, 0.0f};
     float PID_6020_Spd[3] = {85.0f,  0.0f, 0.0f};
     float PID_3508_Spd[3] = {5.0f,   0.1f,  0.0f};
 
