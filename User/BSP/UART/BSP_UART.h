@@ -7,7 +7,6 @@
 
 #include "stm32h7xx_hal.h"
 
-// 统一的底层回调函数指针类型：只抛出接收数据的指针、实际长度，不涉及任何应用层特有结构体
 typedef void (*BSP_UART_Callback_t)(uint8_t *pData, void *device_ptr, uint16_t Size);
 
 typedef struct {
@@ -15,11 +14,10 @@ typedef struct {
     uint8_t *rx_buf1;
     uint16_t dma_rx_size;
     uint16_t expected_size;
-    void *device_ptr;               // 摆渡指针，底层只负责保管，不关心它是啥
+    void *device_ptr;
     BSP_UART_Callback_t resolve;
 } BSP_UART_Slot_t;
 
-// 严格按照你在 Comm_Router 里调用的参数顺序声明
 void BSP_UART_Register_Slot(UART_HandleTypeDef *huart,
                             uint16_t expected_size,
                             uint8_t *rx_buf0,
@@ -30,6 +28,7 @@ void BSP_UART_Register_Slot(UART_HandleTypeDef *huart,
 
 typedef struct {
     UART_HandleTypeDef *huart;
+    uint32_t baudrate;              // 期望的波特率，0表示不修改
     uint16_t expected_size;
     uint8_t *rx_buf0;
     uint8_t *rx_buf1;
@@ -42,10 +41,11 @@ typedef struct {
 #define MACRO_CONCAT(a, b) _MACRO_CONCAT_IMPL(a, b)
 
 /* --- UART 自动注册节点 --- */
-#define UART_RX_NODE(huart_ptr, exp_size, buf0, buf1, dma_size, dev_ptr_arg, callback) \
+#define UART_RX_NODE(huart_ptr, baud, exp_size, buf0, buf1, dma_size, dev_ptr_arg, callback) \
 __attribute__((used, section("UART_Reg_Sec"))) \
 static const Auto_UART_Reg_t MACRO_CONCAT(_uart_reg_, __LINE__) = { \
 .huart = huart_ptr, \
+.baudrate = baud, \
 .expected_size = exp_size, \
 .rx_buf0 = buf0, \
 .rx_buf1 = buf1, \

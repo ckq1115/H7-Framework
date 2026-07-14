@@ -11,8 +11,6 @@
 #include "Classic_Control.h"
 #include "Robot_Config.h"
 
-
-
 // --- 状态机枚举定义 ---
 typedef enum {
     CALIB_START = 0,

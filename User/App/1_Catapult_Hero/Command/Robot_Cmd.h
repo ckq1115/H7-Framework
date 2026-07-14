@@ -1,6 +1,5 @@
 //
 // Created by CaoKangqi on 2026/6/23.
-// 模块功能：总控中心逻辑（纯净版）- 指令集与接口
 //
 #ifndef H7_FRAMEWORK_ROBOT_CMD_H
 #define H7_FRAMEWORK_ROBOT_CMD_H

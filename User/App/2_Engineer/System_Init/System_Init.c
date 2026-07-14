@@ -3,15 +3,14 @@
 //
 #include "System_Init.h"
 
+#include "BMI088.h"
 #include "BSP_DWT.h"
 #include "BSP_FDCAN.h"
 #include "WS2812.h"
-#include "BMI088.h"
 #include "BSP_TIM.h"
 #include "BSP_UART.h"
 #include "Buzzer.h"
 #include "System_State.h"
-#include "Robot_Cmd.h"
 #include "Robot_Config.h"
 #include "System_Indicator.h"
 
@@ -45,15 +44,13 @@ void System_Init() {
     HAL_GPIO_WritePin(POWER_5V_GPIO_Port, POWER_5V_Pin, GPIO_PIN_SET);
 
     HAL_TIM_Base_Start_IT(&htim4);
-    //PWM设备初始化
-    BSP_PWM_Start(&buzzer_pwm);
-    BSP_PWM_Start(&imu_heater_pwm);
-    //BSP_PWM_Start(&ws2812_pwm);
+    HAL_TIM_Base_Start_IT(&htim6);
+    HAL_TIM_Base_Start_IT(&htim7);
     //BMI088初始化
     BMI088_Init();
     //系统状态监测初始化
     System_Indicator_Init();
     System_State_Init();
     //指令中心初始化
-    Robot_Cmd_Init();
+
 }
