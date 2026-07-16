@@ -184,10 +184,18 @@ void Chassis_Control_Task(const Chassis_Motor_Group_t *c_motor, float dt)
 
         bool trigger_discharge = true;
         float cap_board_limit = 0.0f;
-        float final_limit = Chassis_Power_Arbitrator(chassis_referee.robot_status.chassis_power_limit,
-                                                     chassis_referee.power_heat_data.buffer_energy,
-                                                     1, &local_cap_data, &trigger_discharge,
-                                                     &cap_board_limit);
+        float final_limit = 0.0f;
+        if (chassis_referee.offline.is_online) {
+            final_limit = Chassis_Power_Arbitrator(
+                                    chassis_referee.robot_status.chassis_power_limit,
+                                    chassis_referee.power_heat_data.buffer_energy,
+                                    1, &local_cap_data, &trigger_discharge, &cap_board_limit);
+        }
+        else {
+            trigger_discharge = FALSE;
+            cap_board_limit = 75.0f;//
+            final_limit = 75.0f;
+        }
         Power_Ctrl_Calculate(&chassis_model, final_limit, pwr_groups, 2);
 
         for(int i=0; i<4; i++) {
